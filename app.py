@@ -12,7 +12,7 @@ st.markdown("""
         background-color: #F8FAFC;
     }
     
-    /* Criação de um Banner/Cabeçalho moderno em CSS (sem imagens gigantes) */
+    /* Criação de um Banner/Cabeçalho moderno em CSS */
     .cabecalho-moderno {
         background: linear-gradient(135deg, #1E3A8A 0%, #0284C7 100%);
         padding: 1.5rem;
@@ -63,8 +63,8 @@ Regras de conduta:
 4. Estruture suas respostas com clareza (tópicos, prós e contras técnicos).
 5. Se não tiver certeza absoluta de um dado geográfico, não invente: diga que 'é necessária a consulta ao anexo técnico original'."""
 
-# Inicializando o modelo
-modelo = genai.GenerativeModel(model_name="gemini-1.5-pro", system_instruction=instrucao_sistema)
+# Inicializando o modelo (AJUSTADO PARA A VERSÃO FLASH - Mais rápida e estável)
+modelo = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=instrucao_sistema)
 
 # 5. Memória do Chat
 if "mensagens" not in st.session_state:
@@ -87,9 +87,12 @@ with aba1:
         st.session_state.mensagens.append({"role": "user", "content": pergunta})
         
         with st.spinner("Analisando bases técnicas, jurídicas e dados oceanográficos..."):
-            resposta = modelo.generate_content(pergunta)
-            st.chat_message("assistant").write(resposta.text)
-            st.session_state.mensagens.append({"role": "assistant", "content": resposta.text})
+            try:
+                resposta = modelo.generate_content(pergunta)
+                st.chat_message("assistant").write(resposta.text)
+                st.session_state.mensagens.append({"role": "assistant", "content": resposta.text})
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao consultar a IA. Verifique sua chave de API. Detalhe: {e}")
 
 # --- ABA 2: O COMPARADOR ---
 with aba2:
@@ -104,6 +107,9 @@ with aba2:
     if st.button("Gerar Relatório Analítico"):
         with st.spinner("Compilando dados técnicos comparativos..."):
             comando_comparacao = f"Faça uma análise acadêmica comparando como o PEM lidou com '{tema_sul}' na Região Sul versus '{tema_nordeste}' na Região Nordeste. Extraia lições que podem ser aplicadas no Sudeste."
-            resposta_comparador = modelo.generate_content(comando_comparacao)
-            st.success("✅ Relatório analítico estruturado com sucesso!")
-            st.markdown(resposta_comparador.text)
+            try:
+                resposta_comparador = modelo.generate_content(comando_comparacao)
+                st.success("✅ Relatório analítico estruturado com sucesso!")
+                st.markdown(resposta_comparador.text)
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao gerar o relatório. Detalhe: {e}")
