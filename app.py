@@ -4,19 +4,16 @@ import requests
 import io
 from PyPDF2 import PdfReader
 
-# --- 1. CONFIGURAÇÃO DOS SEUS CADERNOS (PREENCHA AQUI) ---
-# Adicione todos os seus 22 cadernos seguindo o padrão: "Nome": "ID_DO_DRIVE"
+# --- 1. CONFIGURAÇÃO DOS SEUS CADERNOS (COLOQUE OS IDs REAIS AQUI) ---
 MEUS_CADERNOS = {
-    "Caderno Sul - Vol 1": "ID_SUL_1",
-    "Caderno Sul - Vol 2": "ID_SUL_2",
-    "Caderno Nordeste - Gestão": "ID_NORDESTE",
-    "Caderno Nordeste - Pesca": "ID_PESCA_NE",
-    # Adicione os outros 18 aqui...
+    "Caderno Sul - Vol 1": "SEU_ID_AQUI",
+    "Caderno Nordeste - Gestão": "SEU_ID_AQUI",
+    # Adicione os outros aqui seguindo o mesmo padrão
 }
 
-st.set_page_config(page_title="PEM Sudeste - Inteligência Documental", layout="wide")
+st.set_page_config(page_title="Assistente PEM Sudeste", layout="wide")
 
-# --- 2. ESTILO VISUAL MODERNO ---
+# --- 2. DESIGN E ESTILO ---
 st.markdown("""
 <style>
     .stApp { background-color: #F8FAFC; }
@@ -27,12 +24,30 @@ st.markdown("""
 </style>
 <div class="main-header">
     <h1>🌊 Assistente PEM Sudeste</h1>
-    <p>Leitura Técnica e Rastreável de Cadernos de Conservação</p>
+    <p>Inteligência Documental Rastreável</p>
 </div>
 """, unsafe_allow_html=True)
 
-# --- 3. FUNÇÕES TÉCNICAS (Leitura do Drive) ---
-def extrair_texto_pdf(file_id):
+# --- 3. CONEXÃO SEGURA COM O GOOGLE AI ---
+try:
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    
+    # Busca automática de modelo para evitar o erro "NotFound"
+    modelo_nome = None
+    for m in genai.list_models():
+        if 'generateContent' in m.supported_generation_methods:
+            modelo_nome = m.name
+            break
+    
+    if modelo_nome:
+        model = genai.GenerativeModel(modelo_nome)
+    else:
+        st.error("Nenhum modelo de IA compatível encontrado.")
+except Exception as e:
+    st.error(f"Erro de conexão: {e}")
+
+# --- 4. FUNÇÃO DE LEITURA DE PDF ---
+def ler_pdf(file_id, nome_doc):
     try:
         url = f'https://drive.google.com/uc?id={file_id}'
         response = requests.get(url)
@@ -40,68 +55,63 @@ def extrair_texto_pdf(file_id):
         reader = PdfReader(f)
         texto = ""
         for i, page in enumerate(reader.pages):
-            texto += f"\n[FONTE: PÁGINA {i+1}]\n" + page.extract_text()
+            texto += f"\n[ARQUIVO: {nome_doc} | PÁGINA: {i+1}]\n" + page.extract_text()
         return texto
     except:
         return ""
 
-# --- 4. BARRA LATERAL (SELETOR DE FONTES) ---
-st.sidebar.header("📚 Fontes de Conhecimento")
-st.sidebar.write("Selecione até 2 cadernos para a IA analisar:")
-selecionados = st.sidebar.multiselect("Cadernos ativos:", list(MEUS_CADERNOS.keys()), max_selections=2)
+# --- 5. BARRA LATERAL (SELETOR) ---
+st.sidebar.header("📚 Painel de Documentos")
+selecionados = st.sidebar.multiselect("Selecione os cadernos para análise:", list(MEUS_CADERNOS.keys()))
 
-# Carregamento do texto na memória
-contexto_documentos = ""
+contexto_pdf = ""
 if selecionados:
-    with st.sidebar.status("📖 Lendo documentos...", expanded=False):
+    with st.sidebar.status("📖 Lendo PDFs...", expanded=False):
         for nome in selecionados:
-            id_drive = MEUS_CADERNOS[nome]
-            contexto_documentos += f"\n--- INÍCIO DO ARQUIVO: {nome} ---\n"
-            contexto_documentos += extrair_texto_pdf(id_drive)
-    st.sidebar.success(f"{len(selecionados)} caderno(s) carregado(s)!")
+            contexto_pdf += ler_pdf(MEUS_CADERNOS[nome], nome)
+    st.sidebar.success(f"IA carregada com {len(selecionados)} documento(s).")
 
-# --- 5. CONFIGURAÇÃO DA IA ---
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Instrução para evitar invenções
+instrucao_mestra = f"""Você é um Acadêmico Rigoroso.
+BASE DE DADOS ATUAL:
+{contexto_pdf if selecionados else 'NENHUM DOCUMENTO SELECIONADO.'}
 
-instrucao_base = """Você é um Acadêmico Rigoroso. 
-REGRAS:
-1. Responda APENAS com base no texto fornecido abaixo. 
-2. Se a informação não estiver no texto, diga: 'Esta informação não consta nos cadernos selecionados'.
-3. Sempre cite o Caderno e a Página (ex: Caderno Sul, pág. 12).
-4. No final, adicione o aviso de que você é uma IA e as informações devem ser conferidas."""
+REGRAS CRÍTICAS:
+1. Responda APENAS com base no texto acima.
+2. Se não estiver no texto, diga explicitamente que não encontrou nos cadernos selecionados.
+3. Cite o nome do Caderno e a Página de cada informação.
+4. Finalize com: '⚠️ *Aviso: Sou uma IA. Confira as informações nos cadernos oficiais.*'
+"""
 
 # --- 6. INTERFACE DE ABAS ---
-aba1, aba2 = st.tabs(["🔮 Oráculo (Consulta)", "⚖️ Comparador Técnico"])
+aba1, aba2 = st.tabs(["🔮 Oráculo (Chat)", "⚖️ Comparador"])
 
 with aba1:
-    if not selecionados:
-        st.warning("👈 Selecione ao menos um caderno na barra lateral para começar.")
-    else:
-        chat_container = st.container(height=400)
-        if "mensagens" not in st.session_state: st.session_state.mensagens = []
-        
-        with chat_container:
-            for m in st.session_state.mensagens: st.chat_message(m["role"]).write(m["content"])
+    chat_box = st.container(height=400)
+    if "mensagens" not in st.session_state: st.session_state.mensagens = []
+    
+    with chat_box:
+        for m in st.session_state.mensagens: st.chat_message(m["role"]).write(m["content"])
             
-        pergunta = st.chat_input("Sua dúvida técnica...")
-        if pergunta:
-            chat_container.chat_message("user").write(pergunta)
+    pergunta = st.chat_input("Sua dúvida técnica...")
+    if pergunta:
+        if not selecionados:
+            st.error("Selecione um caderno na barra lateral primeiro!")
+        else:
+            chat_box.chat_message("user").write(pergunta)
             st.session_state.mensagens.append({"role": "user", "content": pergunta})
             
-            prompt = f"{instrucao_base}\n\nCONTEÚDO DOS CADERNOS:\n{contexto_documentos}\n\nPERGUNTA: {pergunta}"
-            resposta = model.generate_content(prompt)
-            
-            chat_container.chat_message("assistant").write(resposta.text)
-            st.session_state.mensagens.append({"role": "assistant", "content": resposta.text})
+            with chat_box:
+                with st.spinner("Consultando base oficial..."):
+                    res = model.generate_content(instrucao_mestra + "\nPergunta: " + pergunta)
+                    st.chat_message("assistant").write(res.text)
+                    st.session_state.mensagens.append({"role": "assistant", "content": res.text})
 
 with aba2:
     if len(selecionados) < 2:
-        st.info("💡 Selecione exatamente 2 cadernos na barra lateral para gerar uma comparação automática entre eles.")
+        st.info("💡 Selecione ao menos 2 cadernos na barra lateral para comparar.")
     else:
-        st.subheader(f"Análise Comparativa: {selecionados[0]} vs {selecionados[1]}")
-        if st.button("Executar Comparação Técnica"):
-            with st.spinner("Cruzando dados dos cadernos..."):
-                prompt_comp = f"{instrucao_base}\n\nCONTEÚDO DOS CADERNOS:\n{contexto_documentos}\n\nTAREFA: Compare as abordagens desses dois cadernos sobre zoneamento e conflitos de uso. Aponte semelhanças e diferenças com rigor acadêmico."
-                res_comp = model.generate_content(prompt_comp)
+        if st.button("Executar Comparação Real"):
+            with st.spinner("Analisando documentos selecionados..."):
+                res_comp = model.generate_content(instrucao_mestra + "\nTAREFA: Compare tecnicamente os cadernos selecionados.")
                 st.markdown(res_comp.text)
