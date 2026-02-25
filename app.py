@@ -64,7 +64,7 @@ Regras de conduta:
 5. Se não tiver certeza absoluta de um dado geográfico, não invente: diga que 'é necessária a consulta ao anexo técnico original'."""
 
 # Inicializando o modelo (AJUSTADO PARA A VERSÃO FLASH - Mais rápida e estável)
-modelo = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=instrucao_sistema)
+modelo = genai.GenerativeModel(model_name="gemini-1.5-flash-latest", system_instruction=instrucao_sistema)
 
 # 5. Memória do Chat
 if "mensagens" not in st.session_state:
