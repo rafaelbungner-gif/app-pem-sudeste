@@ -30,13 +30,12 @@ try:
 except Exception as e:
     st.error("⚠️ Chave de API não encontrada nos Secrets do Streamlit.")
 
-# ZERO INVENÇÃO: Buscando o modelo válido diretamente da sua chave de API
 modelo_valido = None
 try:
     for m in genai.list_models():
         if 'generateContent' in m.supported_generation_methods:
             modelo_valido = m.name
-            break # Pega o primeiro modelo de texto liberado na sua conta
+            break
 except Exception as e:
     st.error(f"Erro ao consultar o servidor do Google: {e}")
 
@@ -60,23 +59,30 @@ if "mensagens" not in st.session_state:
 aba1, aba2 = st.tabs(["🔮 Consulta Técnica (Chat)", "⚖️ Comparador de Zoneamento"])
 
 with aba1:
-    for msg in st.session_state.mensagens:
-        st.chat_message(msg["role"]).write(msg["content"])
+    st.info("💡 **Dica Técnica:** Faça perguntas diretas sobre regulações de portos, áreas de proteção ou regras de pesca.")
+    
+    # A MÁGICA ACONTECE AQUI: Criando uma caixa rolável de 400 pixels de altura
+    caixa_chat = st.container(height=400)
+    
+    with caixa_chat:
+        for msg in st.session_state.mensagens:
+            st.chat_message(msg["role"]).write(msg["content"])
     
     pergunta = st.chat_input("Ex: Quais as restrições para pesca de arrasto próximo a portos?")
     
     if pergunta:
-        st.chat_message("user").write(pergunta)
+        with caixa_chat:
+            st.chat_message("user").write(pergunta)
         st.session_state.mensagens.append({"role": "user", "content": pergunta})
         
-        with st.spinner("Analisando bases técnicas e jurídicas..."):
-            try:
-                # Junta a instrução com a pergunta de forma limpa
-                resposta = modelo.generate_content(instrucao + "Pergunta: " + pergunta)
-                st.chat_message("assistant").write(resposta.text)
-                st.session_state.mensagens.append({"role": "assistant", "content": resposta.text})
-            except Exception as e:
-                st.error(f"Erro ao gerar resposta: {e}")
+        with caixa_chat:
+            with st.spinner("Analisando bases técnicas e jurídicas..."):
+                try:
+                    resposta = modelo.generate_content(instrucao + "Pergunta: " + pergunta)
+                    st.chat_message("assistant").write(resposta.text)
+                    st.session_state.mensagens.append({"role": "assistant", "content": resposta.text})
+                except Exception as e:
+                    st.error(f"Erro ao gerar resposta: {e}")
 
 with aba2:
     col1, col2 = st.columns(2)
@@ -90,7 +96,6 @@ with aba2:
             comando = instrucao + f"Faça uma análise acadêmica comparando como o PEM lidou com '{tema_sul}' no Sul versus '{tema_nordeste}' no Nordeste."
             try:
                 resposta_comparador = modelo.generate_content(comando)
-                # Avisa na tela qual modelo o código encontrou automaticamente
                 st.success(f"✅ Relatório gerado com sucesso! (Modelo utilizado: {modelo_valido})")
                 st.markdown(resposta_comparador.text)
             except Exception as e:
