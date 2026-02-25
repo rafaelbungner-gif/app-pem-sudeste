@@ -4,34 +4,36 @@ import requests
 import io
 from PyPDF2 import PdfReader
 
-# --- 1. CONFIGURAÇÃO DOS SEUS CADERNOS (COLOQUE OS IDs REAIS AQUI) ---
-MEUS_CADERNOS = {
-    # --- REGIÃO SUL ---
-    "CADERNO SUL - PESCA ARTESANAL": "1nnfAxqmZvnHKm4ZoVxexUoImDBBm3KuC",
-    "CADERNO SUL - PESCA INDUSTRIAL": "1wyb2gyxMZ-WWVK2kkWBG96fi0cRJXlTA",
-    "CADERNO SUL - AQUICULTURA": "1J4wtuiPfKtH00wYvzieckJKqXT-CtYfe",
-    "CADERNO SUL - PETRÓLEO E GÁS": "1pdR94_yc_mGPIO9vODRCHOzMkb6mbPcy",
-    "CADERNO SUL - ENERGIAS RENOVÁVEIS": "1lbRv2lQQNEBIsCJDz5Ha03w-ByaAwAJt",
-    "CADERNO SUL - GEOLOGIA E RECURSOS MINERAIS": "1AWbgrbaiqu5uzPTcpyABfD025J8rjWuO",
-    "CADERNO SUL - NAVEGAÇÃO, PORTOS E INDÚSTRIA NAVAL": "1ytOdHmuNLrMJk8laqU2XuBm9e0Zwgv8t",
-    "CADERNO SUL - SEGURANÇA E DEFESA": "1WQFgZYR4-CJZFVCXtz3ADNvoVqgDs8IG",
-    "CADERNO SUL - TURISMO": "1D9H11ZwDcmwanyWYBltPFXtVAX-Qzwrm",
-    "CADERNO SUL - MEIO AMBIENTE E MUDANÇA DO CLIMA": "1ONtkFycmqg72t4btG5LWLieqi8XQa20f",
-    "CADERNO SUL - MULTISSETORIAL INVESTIMENTOS": "1mKFtBk9lHezfl0vPzsO358AxZ_HNYmlk",
-    "CADERNO SUL - INTEGRAÇÃO GERCO PEM": "1bPIxGFANNbd4HbaUrB7Bhukd-HzsOoPZ",
-    
- # --- REGIÃO NORDESTE  ---
-    "CADERNO NE - AQUICULTURA": "1kcOy8uKNonAWo5pA5Aj6ak_eRGhGkKFl",
-    "CADERNO NE - SEGURANÇA E DEFESA": "1HCJygxjqxVPFz9Z6yEByi5fFSysi_aqC",
-    "CADERNO NE - PETRÓLEO E GÁS NATURAL": "1lG1hWBnibfdX_5MJ_eGMpJS4mVHu4TMx",
-    "CADERNO NE - MEIO AMBIENTE E MUDANÇA DO CLIMA": "18zN53AJAZaX445giWdN5FZyg6x3fwyG1",
-    "CADERNO NE - ENERGIAS RENOVÁVEIS": "1LmPst6oY56lLpGK_TWXxFNG8-CdOS8zV",
-    "CADERNO NE - GEOLOGIA E RECURSOS MINERAIS": "1_DD0NcFYmhB7YramfF7QTQTsV3ITMURo",
-    "CADERNO NE - TURISMO": "1kdsI5bGdbIRIPLnXIsPfz9y3XwnY9B-4",
-    "CADERNO NE - PESCA INDUSTRIAL": "1y_3pL2w6iOVZsQlmH0L-hmKUubX863mV",
-    "CADERNO NE - PESCA ARTESANAL": "19arloC0UKOKjwOrQqeKDm7WJGFTkBT8x",
-    "CADERNO NE - ENSINO E PESQUISA DO MAR": "1wYU6AV-4ATcn3kgKtodBXh8Ufs3i3xzA",
-    "CADERNO NE - NAVEGAÇÃO, PORTOS E INDÚSTRIA NAVAL": "1VIqhy5ZmZhQOhNeYWoj2-HSZBkHmGiRR"
+# --- 1. BASE DE DADOS ORGANIZADA POR REGIÃO ---
+CADERNOS_SUL = {
+    "Nenhum": None,
+    "PESCA ARTESANAL": "1nnfAxqmZvnHKm4ZoVxexUoImDBBm3KuC",
+    "PESCA INDUSTRIAL": "1wyb2gyxMZ-WWVK2kkWBG96fi0cRJXlTA",
+    "AQUICULTURA": "1J4wtuiPfKtH00wYvzieckJKqXT-CtYfe",
+    "PETRÓLEO E GÁS": "1pdR94_yc_mGPIO9vODRCHOzMkb6mbPcy",
+    "ENERGIAS RENOVÁVEIS": "1lbRv2lQQNEBIsCJDz5Ha03w-ByaAwAJt",
+    "GEOLOGIA E RECURSOS MINERAIS": "1AWbgrbaiqu5uzPTcpyABfD025J8rjWuO",
+    "NAVEGAÇÃO, PORTOS E INDÚSTRIA NAVAL": "1ytOdHmuNLrMJk8laqU2XuBm9e0Zwgv8t",
+    "SEGURANÇA E DEFESA": "1WQFgZYR4-CJZFVCXtz3ADNvoVqgDs8IG",
+    "TURISMO": "1D9H11ZwDcmwanyWYBltPFXtVAX-Qzwrm",
+    "MEIO AMBIENTE E MUDANÇA DO CLIMA": "1ONtkFycmqg72t4btG5LWLieqi8XQa20f",
+    "MULTISSETORIAL INVESTIMENTOS": "1mKFtBk9lHezfl0vPzsO358AxZ_HNYmlk",
+    "INTEGRAÇÃO GERCO PEM": "1bPIxGFANNbd4HbaUrB7Bhukd-HzsOoPZ"
+}
+
+CADERNOS_NE = {
+    "Nenhum": None,
+    "AQUICULTURA": "1kcOy8uKNonAWo5pA5Aj6ak_eRGhGkKFl",
+    "SEGURANÇA E DEFESA": "1HCJygxjqxVPFz9Z6yEByi5fFSysi_aqC",
+    "PETRÓLEO E GÁS NATURAL": "1lG1hWBnibfdX_5MJ_eGMpJS4mVHu4TMx",
+    "MEIO AMBIENTE E MUDANÇA DO CLIMA": "18zN53AJAZaX445giWdN5FZyg6x3fwyG1",
+    "ENERGIAS RENOVÁVEIS": "1LmPst6oY56lLpGK_TWXxFNG8-CdOS8zV",
+    "GEOLOGIA E RECURSOS MINERAIS": "1_DD0NcFYmhB7YramfF7QTQTsV3ITMURo",
+    "TURISMO": "1kdsI5bGdbIRIPLnXIsPfz9y3XwnY9B-4",
+    "PESCA INDUSTRIAL": "1y_3pL2w6iOVZsQlmH0L-hmKUubX863mV",
+    "PESCA ARTESANAL": "19arloC0UKOKjwOrQqeKDm7WJGFTkBT8x",
+    "ENSINO E PESQUISA DO MAR": "1wYU6AV-4ATcn3kgKtodBXh8Ufs3i3xzA",
+    "NAVEGAÇÃO, PORTOS E INDÚSTRIA NAVAL": "1VIqhy5ZmZhQOhNeYWoj2-HSZBkHmGiRR"
 }
 
 st.set_page_config(page_title="Assistente PEM Sudeste", layout="wide")
@@ -47,30 +49,25 @@ st.markdown("""
 </style>
 <div class="main-header">
     <h1>🌊 Assistente PEM Sudeste</h1>
-    <p>Inteligência Documental Rastreável</p>
+    <p>Inteligência Documental Rastreável por Região</p>
 </div>
 """, unsafe_allow_html=True)
 
-# --- 3. CONEXÃO SEGURA COM O GOOGLE AI ---
+# --- 3. CONEXÃO COM A IA ---
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    
-    # Busca automática de modelo para evitar o erro "NotFound"
     modelo_nome = None
     for m in genai.list_models():
         if 'generateContent' in m.supported_generation_methods:
             modelo_nome = m.name
             break
-    
     if modelo_nome:
         model = genai.GenerativeModel(modelo_nome)
-    else:
-        st.error("Nenhum modelo de IA compatível encontrado.")
 except Exception as e:
     st.error(f"Erro de conexão: {e}")
 
-# --- 4. FUNÇÃO DE LEITURA DE PDF ---
-def ler_pdf(file_id, nome_doc):
+# --- 4. FUNÇÃO DE LEITURA ---
+def ler_pdf(file_id, nome_doc, regiao):
     try:
         url = f'https://drive.google.com/uc?id={file_id}'
         response = requests.get(url)
@@ -78,52 +75,64 @@ def ler_pdf(file_id, nome_doc):
         reader = PdfReader(f)
         texto = ""
         for i, page in enumerate(reader.pages):
-            texto += f"\n[ARQUIVO: {nome_doc} | PÁGINA: {i+1}]\n" + page.extract_text()
+            texto += f"\n[DOC: {regiao} - {nome_doc} | PÁGINA: {i+1}]\n" + page.extract_text()
         return texto
     except:
         return ""
 
-# --- 5. BARRA LATERAL (SELETOR) ---
-st.sidebar.header("📚 Painel de Documentos")
-selecionados = st.sidebar.multiselect("Selecione os cadernos para análise:", list(MEUS_CADERNOS.keys()))
+# --- 5. BARRA LATERAL (DOIS SELETORES) ---
+st.sidebar.header("📚 Seleção de Cadernos")
+
+# Seletor Região Sul
+escolha_sul = st.sidebar.selectbox("📍 Região Sul:", list(CADERNOS_SUL.keys()))
+# Seletor Região Nordeste
+escolha_ne = st.sidebar.selectbox("📍 Região Nordeste:", list(CADERNOS_NE.keys()))
 
 contexto_pdf = ""
-if selecionados:
-    with st.sidebar.status("📖 Lendo PDFs...", expanded=False):
-        for nome in selecionados:
-            contexto_pdf += ler_pdf(MEUS_CADERNOS[nome], nome)
-    st.sidebar.success(f"IA carregada com {len(selecionados)} documento(s).")
+selecionados_nomes = []
 
-# Instrução para evitar invenções
+with st.sidebar.status("📖 Processando documentos...", expanded=False):
+    if escolha_sul != "Nenhum":
+        contexto_pdf += ler_pdf(CADERNOS_SUL[escolha_sul], escolha_sul, "SUL")
+        selecionados_nomes.append(f"Sul ({escolha_sul})")
+    
+    if escolha_ne != "Nenhum":
+        contexto_pdf += ler_pdf(CADERNOS_NE[escolha_ne], escolha_ne, "NE")
+        selecionados_nomes.append(f"NE ({escolha_ne})")
+
+if selecionados_nomes:
+    st.sidebar.success(f"IA carregada: {', '.join(selecionados_nomes)}")
+else:
+    st.sidebar.warning("Nenhum caderno selecionado.")
+
+# Instrução Mestra
 instrucao_mestra = f"""Você é um Acadêmico Rigoroso.
 BASE DE DADOS ATUAL:
-{contexto_pdf if selecionados else 'NENHUM DOCUMENTO SELECIONADO.'}
+{contexto_pdf if contexto_pdf else 'NENHUM DOCUMENTO SELECIONADO.'}
 
 REGRAS CRÍTICAS:
 1. Responda APENAS com base no texto acima.
-2. Se não estiver no texto, diga explicitamente que não encontrou nos cadernos selecionados.
-3. Cite o nome do Caderno e a Página de cada informação.
+2. Cite sempre o Caderno (Sul ou NE), o Tema e a Página.
+3. Se não houver dados, informe que a informação não consta nos documentos carregados.
 4. Finalize com: '⚠️ *Aviso: Sou uma IA. Confira as informações nos cadernos oficiais.*'
 """
 
 # --- 6. INTERFACE DE ABAS ---
-aba1, aba2 = st.tabs(["🔮 Oráculo (Chat)", "⚖️ Comparador"])
+aba1, aba2 = st.tabs(["🔮 Oráculo (Chat)", "⚖️ Comparador Regional"])
 
 with aba1:
     chat_box = st.container(height=400)
     if "mensagens" not in st.session_state: st.session_state.mensagens = []
-    
     with chat_box:
         for m in st.session_state.mensagens: st.chat_message(m["role"]).write(m["content"])
             
     pergunta = st.chat_input("Sua dúvida técnica...")
     if pergunta:
-        if not selecionados:
-            st.error("Selecione um caderno na barra lateral primeiro!")
+        if not selecionados_nomes:
+            st.error("Selecione ao menos um caderno na barra lateral!")
         else:
             chat_box.chat_message("user").write(pergunta)
             st.session_state.mensagens.append({"role": "user", "content": pergunta})
-            
             with chat_box:
                 with st.spinner("Consultando base oficial..."):
                     res = model.generate_content(instrucao_mestra + "\nPergunta: " + pergunta)
@@ -131,10 +140,11 @@ with aba1:
                     st.session_state.mensagens.append({"role": "assistant", "content": res.text})
 
 with aba2:
-    if len(selecionados) < 2:
-        st.info("💡 Selecione ao menos 2 cadernos na barra lateral para comparar.")
+    if len(selecionados_nomes) < 2:
+        st.info("💡 Selecione um caderno do Sul E um do Nordeste para habilitar a comparação entre regiões.")
     else:
+        st.subheader(f"Comparação Técnica: {selecionados_nomes[0]} vs {selecionados_nomes[1]}")
         if st.button("Executar Comparação Real"):
-            with st.spinner("Analisando documentos selecionados..."):
-                res_comp = model.generate_content(instrucao_mestra + "\nTAREFA: Compare tecnicamente os cadernos selecionados.")
+            with st.spinner("Analisando divergências e convergências técnicas..."):
+                res_comp = model.generate_content(instrucao_mestra + "\nTAREFA: Realize uma comparação técnica entre as abordagens destes dois cadernos regionais.")
                 st.markdown(res_comp.text)
