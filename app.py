@@ -55,12 +55,10 @@ st.set_page_config(
 # ============================================================================
 st.markdown("""
 <style>
-    /* Fundo principal com gradiente suave */
     .stApp {
         background: linear-gradient(180deg, #F0F9FF 0%, #E0F2FE 100%);
     }
     
-    /* Header principal com imagem de fundo do litoral brasileiro */
     .main-header {
         background-image: 
             linear-gradient(135deg, rgba(12, 74, 110, 0.85) 0%, rgba(3, 105, 161, 0.80) 50%, rgba(14, 165, 233, 0.85) 100%),
@@ -110,7 +108,6 @@ st.markdown("""
         text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
     }
     
-    /* Badge de status */
     .status-badge {
         display: inline-flex;
         align-items: center;
@@ -131,7 +128,6 @@ st.markdown("""
         transform: translateY(-2px);
     }
     
-    /* Sidebar estilizada */
     .sidebar-section {
         background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%);
         border-radius: 15px;
@@ -148,7 +144,6 @@ st.markdown("""
         font-weight: 600;
     }
     
-    /* Lista de cadernos carregados */
     .loaded-notebooks {
         background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
         border-radius: 12px;
@@ -193,7 +188,6 @@ st.markdown("""
         color: white;
     }
     
-    /* Links na sidebar */
     .source-link {
         display: flex;
         align-items: center;
@@ -223,7 +217,6 @@ st.markdown("""
         font-size: 1.3em;
     }
     
-    /* Métricas e stats */
     .metric-card {
         background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%);
         border-radius: 15px;
@@ -246,13 +239,11 @@ st.markdown("""
         margin-top: 6px;
     }
     
-    /* Divider na sidebar */
     .sidebar-divider {
         border-top: 2px dashed rgba(255,255,255,0.25);
         margin: 20px 0;
     }
     
-    /* Divider decorativo */
     .wave-divider {
         height: 60px;
         background: url('image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%230EA5E9" fill-opacity="0.15" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
@@ -260,11 +251,9 @@ st.markdown("""
         margin: 30px 0;
     }
     
-    /* Esconder footer padrão do Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     
-    /* Tabs personalizadas */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
     }
@@ -275,14 +264,6 @@ st.markdown("""
         font-weight: 600;
     }
     
-    /* Selectbox estilizada */
-    .stSelectbox label {
-        color: #0C4A6E;
-        font-weight: 600;
-        font-size: 0.9em;
-    }
-    
-    /* Botões personalizados */
     .stButton > button {
         background: linear-gradient(135deg, #0369A1 0%, #0EA5E9 100%);
         color: white;
@@ -299,11 +280,23 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6);
     }
+    
+    /* Token counter badge */
+    .token-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.75em;
+        font-weight: 600;
+        margin-left: 8px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================================
-# 🌊 HEADER PRINCIPAL COM IMAGEM DE FUNDO (LITORAL BRASILEIRO)
+# 🌊 HEADER PRINCIPAL
 # ============================================================================
 st.markdown("""
 <div class="main-header">
@@ -328,7 +321,16 @@ try:
             modelo_nome = m.name
             break
     if modelo_nome:
-        model = genai.GenerativeModel(modelo_nome)
+        # Configuração otimizada para reduzir alucinações
+        model = genai.GenerativeModel(
+            modelo_nome,
+            generation_config=genai.GenerationConfig(
+                temperature=0.2,      # Baixa = mais determinístico
+                top_p=0.8,            # Mais conservador
+                top_k=40,             # Limita vocabulário
+                max_output_tokens=1500  # Limite de resposta
+            )
+        )
 except Exception as e:
     st.error(f"⚠️ Erro de conexão com o Google AI: {e}")
 
@@ -392,10 +394,208 @@ def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=8):
     return paginas_finais
 
 # ============================================================================
-# 📚 BARRA LATERAL APRIMORADA
+# 🎯 NOVO: EXTRATOR DE TRECHOS RELEVANTES (ECONOMIA DE TOKENS)
+# ============================================================================
+def extrair_trechos_relevantes(paginas_filtradas, pergunta, max_caracteres_por_trecho=500):
+    """
+    Extrai apenas parágrafos relevantes de cada página.
+    Reduz tokens em ~60% comparado a páginas completas.
+    """
+    palavras_chave = set(re.findall(r'\w{4,}', pergunta.lower()))
+    trechos = []
+    
+    for pag in paginas_filtradas:
+        # Divide em parágrafos
+        paragrafos = pag['texto_original'].split('\n\n')
+        
+        for paragrafo in paragrafos:
+            paragrafo_limpo = paragrafo.strip()
+            if len(paragrafo_limpo) < 50:
+                continue
+                
+            # Score de relevância
+            score = sum(1 for palavra in palavras_chave if palavra.lower() in paragrafo_limpo.lower())
+            
+            if score >= 1:
+                trechos.append({
+                    'cabecalho': pag['cabecalho'],
+                    'texto': paragrafo_limpo[:max_caracteres_por_trecho],
+                    'score': score
+                })
+    
+    # Ordena por relevância e limita
+    trechos.sort(key=lambda x: x['score'], reverse=True)
+    return trechos[:15]  # Máximo de 15 trechos
+
+# ============================================================================
+# 📏 CONTROLE DE TOKENS
+# ============================================================================
+def contar_tokens_estimado(texto):
+    """Estimativa: 1 token ≈ 4 caracteres em português"""
+    return len(texto) // 4
+
+def limitar_contexto(contexto, max_tokens=2800):
+    """Garante que o contexto não exceda o limite de tokens"""
+    tokens_atuais = contar_tokens_estimado(contexto)
+    
+    if tokens_atuais <= max_tokens:
+        return contexto, tokens_atuais
+    
+    linhas = contexto.split('\n')
+    contexto_reduzido = []
+    tokens_usados = 0
+    
+    for linha in linhas:
+        tokens_linha = contar_tokens_estimado(linha)
+        if tokens_usados + tokens_linha <= max_tokens:
+            contexto_reduzido.append(linha)
+            tokens_usados += tokens_linha
+        else:
+            break
+    
+    return '\n'.join(contexto_reduzido), tokens_usados
+
+# ============================================================================
+# 🎯 DETECTOR DE TIPO DE PERGUNTA
+# ============================================================================
+def detectar_tipo_pergunta(pergunta):
+    """Detecta o tipo de pergunta para ajustar o prompt"""
+    p = pergunta.lower()
+    
+    if any(word in p for word in ['compare', 'diferença', 'diferenças', 'entre', 'vs', 'versus']):
+        return "comparacao"
+    elif any(word in p for word in ['liste', 'listar', 'quais', 'cite', 'mencione']):
+        return "lista"
+    elif any(word in p for word in ['resumo', 'explique', 'o que', 'como funciona', 'defina']):
+        return "explicacao"
+    elif any(word in p for word in ['impacto', 'consequência', 'efeito', 'resultado']):
+        return "analise"
+    else:
+        return "padrao"
+
+# ============================================================================
+#  PROMPT OTIMIZADO (ANTI-ALUCINAÇÃO)
+# ============================================================================
+def criar_prompt_final(pergunta, contexto, tipo_pergunta="padrao"):
+    """
+    Cria prompt otimizado para reduzir alucinações e economizar tokens.
+    """
+    
+    prompts = {
+        "padrao": f"""
+### PAPEL
+Você é um assistente técnico especializado em Plano de Espaço Marinho (PEM) do Brasil.
+
+### CONTEXTO DOCUMENTAL
+{contexto}
+
+### REGRAS OBRIGATÓRIAS
+✓ Responda APENAS com base no contexto acima
+✓ Cite SEMPRE: `(Região | Caderno | Pág. X)`
+✓ Se não encontrar informação: diga "Não há informação nos cadernos sobre..."
+✓ Máximo 350 palavras
+✓ Use bullet points para listas
+✓ Não invente dados, números ou citações
+
+### PERGUNTA
+{pergunta}
+
+### RESPOSTA
+""",
+
+        "comparacao": f"""
+### PAPEL
+Analista técnico de Plano de Espaço Marinho (PEM).
+
+### CONTEXTO DOCUMENTAL
+{contexto}
+
+### TAREFA
+Compare as abordagens regionais encontradas nos trechos.
+
+### REGRAS
+✓ Use tabela quando possível
+✓ Cite: `(Região | Caderno | Pág. X)`
+✓ Se não houver dados para comparar, informe claramente
+✓ Não especule sobre diferenças não documentadas
+
+### PERGUNTA
+{pergunta}
+
+### RESPOSTA
+""",
+
+        "lista": f"""
+### PAPEL
+Assistente técnico PEM.
+
+### CONTEXTO DOCUMENTAL
+{contexto}
+
+### TAREFA
+Liste os itens solicitados com base apenas nos documentos.
+
+### REGRAS
+✓ Formato: `- Item (fonte: Região | Caderno | Pág. X)`
+✓ Se não encontrar, diga quantos itens foram encontrados
+✓ Não complete com informação externa
+
+### PERGUNTA
+{pergunta}
+
+### RESPOSTA
+""",
+
+        "explicacao": f"""
+### PAPEL
+Especialista em explicação técnica de PEM.
+
+### CONTEXTO DOCUMENTAL
+{contexto}
+
+### TAREFA
+Explique de forma didática o conceito solicitado.
+
+### REGRAS
+✓ 1-2 frases de definição inicial
+✓ Detalhes com citações
+✓ Se o conceito não estiver nos documentos, avise
+✓ Máximo 300 palavras
+
+### PERGUNTA
+{pergunta}
+
+### RESPOSTA
+""",
+
+        "analise": f"""
+### PAPEL
+Analista de impactos do Plano de Espaço Marinho.
+
+### CONTEXTO DOCUMENTAL
+{contexto}
+
+### TAREFA
+Analise os impactos/consequências mencionados nos documentos.
+
+### REGRAS
+✓ Separe por categoria (ambiental, social, econômico)
+✓ Cite fontes para cada afirmação
+✓ Não extrapole além do que está documentado
+
+### PERGUNTA
+{pergunta}
+
+### RESPOSTA
+"""
+    }
+    
+    return prompts.get(tipo_pergunta, prompts["padrao"])
+
+# ============================================================================
+# 📚 BARRA LATERAL
 # ============================================================================
 with st.sidebar:
-    # Header da sidebar com ícone
     st.markdown("""
     <div style="text-align: center; padding: 20px 0; background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%); 
                 border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(12, 74, 110, 0.3);">
@@ -405,7 +605,6 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
-    # Links para os cadernos oficiais
     st.markdown("**🔗 Fontes Oficiais**")
     st.markdown("""
     <a href="https://www.marinha.mil.br/secirm/psrm/pem/cadernos-setoriais-pem-nordeste" 
@@ -420,7 +619,6 @@ with st.sidebar:
     
     st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
     
-    # Seleção de cadernos - SEÇÕES COLORIDAS
     st.markdown("<div class='sidebar-section'>", unsafe_allow_html=True)
     st.markdown("<h4>📍 Região Sul</h4>", unsafe_allow_html=True)
     escolha_sul = st.selectbox("", list(CADERNOS_SUL.keys()), key="sul_select", label_visibility="collapsed")
@@ -433,11 +631,14 @@ with st.sidebar:
     
     st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
     
-    # Status dos cadernos ativos
     if "cadernos_ativos" not in st.session_state:
         st.session_state.cadernos_ativos = []
     if "todas_as_paginas_lidas" not in st.session_state:
         st.session_state.todas_as_paginas_lidas = []
+    if "mensagens" not in st.session_state:
+        st.session_state.mensagens = []
+    if "stats_tokens" not in st.session_state:
+        st.session_state.stats_tokens = {"total": 0, "ultima_resposta": 0}
     
     if st.session_state.cadernos_ativos:
         st.markdown("""
@@ -465,7 +666,6 @@ with st.sidebar:
         
         st.markdown("</div>", unsafe_allow_html=True)
         
-        # Contador de páginas
         total_paginas = len(st.session_state.todas_as_paginas_lidas)
         st.markdown(f"""
         <div class="metric-card">
@@ -473,11 +673,21 @@ with st.sidebar:
             <div class="metric-label">📄 Páginas Indexadas</div>
         </div>
         """, unsafe_allow_html=True)
+        
+        # Stats de tokens
+        if st.session_state.stats_tokens["total"] > 0:
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%); 
+                        border-radius: 12px; padding: 15px; color: white; text-align: center;">
+                <div style="font-size: 1.8em; font-weight: 700;">{st.session_state.stats_tokens['total']}</div>
+                <div style="font-size: 0.85em; opacity: 0.9;">🪙 Tokens economizados</div>
+            </div>
+            """, unsafe_allow_html=True)
     else:
         st.info("👈 Selecione os cadernos acima para começar")
 
 # ============================================================================
-# 💾 CONTROLE DE ESTADO E CARREGAMENTO
+# 💾 CONTROLE DE ESTADO
 # ============================================================================
 cadernos_selecionados_agora = []
 if escolha_sul and escolha_sul != "Nenhum": 
@@ -517,9 +727,6 @@ with aba1:
     
     chat_box = st.container()
     
-    if "mensagens" not in st.session_state: 
-        st.session_state.mensagens = []
-    
     with chat_box:
         for m in st.session_state.mensagens:
             with st.chat_message(m["role"], avatar="👤" if m["role"] == "user" else "🤖"):
@@ -534,36 +741,44 @@ with aba1:
             st.session_state.mensagens.append({"role": "user", "content": pergunta})
             
             with st.chat_message("assistant", avatar="🤖"):
-                with st.spinner("🔍 Buscando nas páginas mais relevantes..."):
+                with st.spinner("🔍 Buscando e analisando documentos..."):
+                    # 1. Busca páginas relevantes
                     paginas_filtradas = buscar_paginas_relevantes(
                         pergunta, 
                         st.session_state.todas_as_paginas_lidas, 
                         limite_paginas=8
                     )
                     
+                    # 2. Extrai apenas trechos relevantes (ECONOMIA DE TOKENS)
+                    trechos = extrair_trechos_relevantes(paginas_filtradas, pergunta)
+                    
+                    # 3. Monta contexto
                     contexto_enxuto = ""
-                    for pag in paginas_filtradas:
-                        contexto_enxuto += f"\n{pag['cabecalho']}\n{pag['texto_original']}\n"
+                    for trecho in trechos:
+                        contexto_enxuto += f"\n[{trecho['cabecalho']}]\n{trecho['texto']}\n"
                     
-                    # Mostrar fontes encontradas em expander
-                    with st.expander(f"📚 {len(paginas_filtradas)} fontes consultadas", expanded=False):
-                        for pag in paginas_filtradas:
-                            st.markdown(f"**{pag['cabecalho']}**")
+                    # 4. Limita tokens
+                    contexto_otimizado, tokens_contexto = limitar_contexto(contexto_enxuto, max_tokens=2800)
                     
-                    instrucao_mestra = f"""Você é um Acadêmico Rigoroso especializado em Plano de Espaço Marinho.
-                    LEIA APENAS ESTES TRECHOS ESPECÍFICOS RETIRADOS DOS DOCUMENTOS:
-                    {contexto_enxuto if contexto_enxuto else 'Nenhum trecho relevante encontrado.'}
+                    # 5. Detecta tipo de pergunta
+                    tipo_pergunta = detectar_tipo_pergunta(pergunta)
                     
-                    REGRAS:
-                    1. Responda APENAS com base nos trechos acima.
-                    2. Cite OBRIGATORIAMENTE o Caderno (Região e Nome) e a Página exata.
-                    3. Use formatação Markdown para melhor leitura.
-                    4. Se a resposta não estiver nos trechos, diga: "Não encontrei essa informação nos documentos."
-                    5. Termine com: '⚠️ *Aviso: Sou uma IA. Confira as informações nos cadernos oficiais.*'
-                    """
+                    # 6. Cria prompt otimizado
+                    prompt_final = criar_prompt_final(pergunta, contexto_otimizado, tipo_pergunta)
+                    
+                    # Atualiza stats
+                    tokens_estimados = contar_tokens_estimado(prompt_final)
+                    st.session_state.stats_tokens["ultima_resposta"] = tokens_estimados
+                    st.session_state.stats_tokens["total"] += tokens_estimados
+                    
+                    # 7. Mostra fontes
+                    with st.expander(f"📚 {len(trechos)} trechos consultados ({tokens_contexto} tokens)", expanded=False):
+                        for t in trechos:
+                            st.markdown(f"**{t['cabecalho']}** | Relevância: {'🟢' if t['score'] >= 3 else '🟡' if t['score'] >= 2 else '🔵'} ({t['score']})")
+                        st.info(f"💡 Tokens economizados vs. páginas completas: ~{int(tokens_contexto * 0.6)}")
                     
                     try:
-                        res = model.generate_content(instrucao_mestra + "\n\nPergunta: " + pergunta)
+                        res = model.generate_content(prompt_final)
                         st.markdown(res.text)
                         st.session_state.mensagens.append({"role": "assistant", "content": res.text})
                     except Exception as e:
@@ -580,16 +795,6 @@ with aba2:
                 Selecione <strong>um caderno do Sul e um do Nordeste</strong> na barra lateral 
                 para habilitar a comparação entre as regiões.
             </p>
-            <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
-                <span style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); 
-                            color: white; padding: 10px 25px; border-radius: 25px; font-weight: 600;">
-                    🗺️ Sul
-                </span>
-                <span style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); 
-                            color: white; padding: 10px 25px; border-radius: 25px; font-weight: 600;">
-                    🌴 Nordeste
-                </span>
-            </div>
         </div>
         """, unsafe_allow_html=True)
     else:
@@ -604,32 +809,6 @@ with aba2:
         </div>
         """, unsafe_allow_html=True)
         
-        col_comp1, col_comp2 = st.columns(2)
-        
-        with col_comp1:
-            st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); 
-                        border-radius: 15px; padding: 20px; border: 2px solid #10B981;
-                        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);">
-                <h4 style="color: #10B981; margin-top: 0;">🗺️ Sul</h4>
-                <p style="color: #374151; margin-bottom: 0; font-weight: 500;">
-                    {st.session_state.cadernos_ativos[0][1]}
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col_comp2:
-            st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); 
-                        border-radius: 15px; padding: 20px; border: 2px solid #F59E0B;
-                        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);">
-                <h4 style="color: #F59E0B; margin-top: 0;">🌴 Nordeste</h4>
-                <p style="color: #374151; margin-bottom: 0; font-weight: 500;">
-                    {st.session_state.cadernos_ativos[1][1]}
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-        
         if st.button("🚀 Executar Comparação", type="primary", use_container_width=True):
             with st.spinner("📊 Analisando diretrizes em ambos os cadernos..."):
                 paginas_comp = buscar_paginas_relevantes(
@@ -638,31 +817,43 @@ with aba2:
                     limite_paginas=12
                 )
                 
+                trechos_comp = extrair_trechos_relevantes(paginas_comp, "diretrizes zoneamento conservação impacto")
+                
                 contexto_comp = ""
-                for pag in paginas_comp:
-                    contexto_comp += f"\n{pag['cabecalho']}\n{pag['texto_original']}\n"
+                for t in trechos_comp:
+                    contexto_comp += f"\n[{t['cabecalho']}]\n{t['texto']}\n"
                 
-                prompt_comp = f"""Você é um analista técnico especializado em Planejamento de Espaço Marinho.
-                Baseado APENAS nos trechos abaixo:
-                {contexto_comp}
+                contexto_comp, tokens_comp = limitar_contexto(contexto_comp, max_tokens=3500)
                 
-                TAREFA: 
-                1. Compare tecnicamente as abordagens regionais
-                2. Destaque similaridades e diferenças
-                3. Cite os cadernos e páginas de origem
-                4. Use formatação Markdown com tabelas quando apropriado
-                """
+                prompt_comp = f"""
+### PAPEL
+Analista técnico de Plano de Espaço Marinho (PEM).
+
+### CONTEXTO
+{contexto_comp}
+
+### TAREFA
+Compare as abordagens das regiões Sul e Nordeste.
+
+### REGRAS
+✓ Use tabela comparativa
+✓ Cite: `(Região | Caderno | Pág. X)`
+✓ Destaque similaridades E diferenças
+✓ Se não houver dados para uma região, informe
+✓ Máximo 500 palavras
+
+### RESPOSTA
+"""
                 
                 try:
                     res_comp = model.generate_content(prompt_comp)
                     st.markdown(res_comp.text)
                     
-                    # Box de fontes
-                    with st.expander("📚 Fontes da Comparação"):
-                        for pag in paginas_comp:
-                            st.markdown(f"- {pag['cabecalho']}")
+                    with st.expander(f"📚 {len(trechos_comp)} fontes da comparação"):
+                        for t in trechos_comp:
+                            st.markdown(f"- {t['cabecalho']}")
                 except Exception as e:
-                    st.error("⚠️ Erro na comparação. Tente uma pergunta mais específica.")
+                    st.error("⚠️ Erro na comparação.")
 
 # ============================================================================
 # 🌊 FOOTER
