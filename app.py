@@ -815,7 +815,7 @@ with aba1:
                     paginas_filtradas = buscar_paginas_relevantes(
                         pergunta, 
                         st.session_state.todas_as_paginas_lidas, 
-                        limite_paginas=10  # Aumentado de 8 para 10
+                        limite_paginas=10
                     )
                     
                     # 2. Extrai trechos com contexto preservado
@@ -840,18 +840,26 @@ with aba1:
                         for t in trechos:
                             st.markdown(f"**{t['cabecalho']}** | Relevância: {'🟢' if t['score'] >= 3 else '🟡' if t['score'] >= 2 else '🔵'} ({t['score']})")
                         st.success(f"✅ Contexto otimizado: ~{int((1 - tokens_contexto/10000) * 100)} de economia vs. documento completo")
+                
+                # BLOCO TRY/EXCEPT CORRIGIDO (Alinhado com o 'with st.spinner')
+                try:
+                    # stream=True faz a resposta aparecer palavra por palavra
+                    res_stream = model.generate_content(prompt_final, stream=True)
                     
-                  try:
-                        # stream=True faz a resposta aparecer palavra por palavra
-                        res_stream = model.generate_content(prompt_final, stream=True)
-                        
-                        # Mostra a resposta sendo digitada ao vivo no Streamlit
-                        resposta_completa = st.write_stream(chunk.text for chunk in res_stream)
-                        
-                        # Salva a resposta completa no histórico para o chat não sumir
-                        st.session_state.mensagens.append({"role": "assistant", "content": resposta_completa})
-                    except Exception as e:
-                        st.error(f"⚠️ Erro durante a geração: {e}")
+                    # Gerador seguro para ignorar partes vazias da resposta da API
+                    def stream_generator():
+                        for chunk in res_stream:
+                            if chunk.text:
+                                yield chunk.text
+                                
+                    # Mostra a resposta sendo digitada ao vivo no Streamlit
+                    resposta_completa = st.write_stream(stream_generator())
+                    
+                    # Salva a resposta completa no histórico para o chat não sumir
+                    st.session_state.mensagens.append({"role": "assistant", "content": resposta_completa})
+                
+                except Exception as e:
+                    st.error(f"⚠️ Erro durante a geração: {e}")
 
 with aba2:
     if len(st.session_state.cadernos_ativos) < 2:
