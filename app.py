@@ -88,25 +88,39 @@ def ler_e_fatiar_pdf(file_id, nome_doc, regiao):
     except:
         return []
 
-# --- O BUSCADOR INTELIGENTE ---
+# --- O BUSCADOR INTELIGENTE (AGORA COM VISÃO ESTRUTURAL) ---
 def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=8):
+    # 1. GARANTIA DE SUMÁRIO: Sempre pega as 6 primeiras páginas de cada caderno carregado
+    paginas_estruturais = []
+    for pag in todas_as_paginas:
+        # Extrai o número da página do cabeçalho
+        match = re.search(r'PÁGINA:\s*(\d+)', pag['cabecalho'])
+        if match and int(match.group(1)) <= 6:
+            paginas_estruturais.append(pag)
+
+    # 2. BUSCA DINÂMICA: Procura as palavras-chave da pergunta no resto do documento
     palavras_pergunta = re.findall(r'\w+', pergunta.lower())
-    palavras_ignoradas = {'o', 'a', 'os', 'as', 'de', 'do', 'da', 'em', 'no', 'na', 'para', 'com', 'que', 'quais', 'qual', 'como', 'sobre'}
+    palavras_ignoradas = {'o', 'a', 'os', 'as', 'de', 'do', 'da', 'em', 'no', 'na', 'para', 'com', 'que', 'quais', 'qual', 'como', 'sobre', 'diferença', 'entre'}
     palavras_chave = [p for p in palavras_pergunta if p not in palavras_ignoradas and len(p) > 2]
     
-    if not palavras_chave:
-        return todas_as_paginas[:limite_paginas]
-
-    resultados = []
-    for pag in todas_as_paginas:
-        pontuacao = sum(1 for palavra in palavras_chave if palavra in pag["texto"])
-        if pontuacao > 0:
-            resultados.append((pontuacao, pag))
+    melhores_paginas = []
+    if palavras_chave:
+        resultados = []
+        for pag in todas_as_paginas:
+            pontuacao = sum(1 for palavra in palavras_chave if palavra in pag["texto"])
+            if pontuacao > 0:
+                resultados.append((pontuacao, pag))
+        
+        resultados.sort(key=lambda x: x[0], reverse=True)
+        melhores_paginas = [item[1] for item in resultados[:limite_paginas]]
     
-    resultados.sort(key=lambda x: x[0], reverse=True)
-    melhores_paginas = [item[1] for item in resultados[:limite_paginas]]
-    
-    return melhores_paginas
+    # 3. JUNTA TUDO: O Sumário + As páginas específicas da dúvida (sem repetir)
+    paginas_finais = paginas_estruturais.copy()
+    for pag in melhores_paginas:
+        if pag not in paginas_finais:
+            paginas_finais.append(pag)
+            
+    return paginas_finais
 
 # --- BARRA LATERAL ---
 st.sidebar.header("📚 Seleção de Cadernos")
