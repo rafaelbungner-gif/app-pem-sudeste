@@ -48,8 +48,8 @@ st.markdown("""
     }
 </style>
 <div class="main-header">
-    <h1>🌊 Assistente PEM (Sul e Nordeste)</h1>
-    <p>Busca Inteligente e Rastreável (Otimizada contra travamentos)</p>
+    <h1>🌊 Assistente PEM</h1>
+    <p>Busca Inteligente e Rastreável</p>
 </div>
 """, unsafe_allow_html=True)
 
