@@ -117,7 +117,7 @@ REGRAS CRÍTICAS:
 4. Finalize com: '⚠️ *Aviso: Sou uma IA. Confira as informações nos cadernos oficiais.*'
 """
 
-# --- 6. INTERFACE DE ABAS ---
+# --- 6. INTERFACE DE ABAS COM TRATAMENTO DE COTA ---
 aba1, aba2 = st.tabs(["🔮 Oráculo (Chat)", "⚖️ Comparador Regional"])
 
 with aba1:
@@ -135,16 +135,28 @@ with aba1:
             st.session_state.mensagens.append({"role": "user", "content": pergunta})
             with chat_box:
                 with st.spinner("Consultando base oficial..."):
-                    res = model.generate_content(instrucao_mestra + "\nPergunta: " + pergunta)
-                    st.chat_message("assistant").write(res.text)
-                    st.session_state.mensagens.append({"role": "assistant", "content": res.text})
+                    try:
+                        res = model.generate_content(instrucao_mestra + "\nPergunta: " + pergunta)
+                        st.chat_message("assistant").write(res.text)
+                        st.session_state.mensagens.append({"role": "assistant", "content": res.text})
+                    except Exception as e:
+                        if "429" in str(e) or "ResourceExhausted" in str(e):
+                            st.error("⚠️ Limite de processamento atingido. Por favor, aguarde 60 segundos antes da próxima pergunta.")
+                        else:
+                            st.error(f"Erro inesperado: {e}")
 
 with aba2:
     if len(selecionados_nomes) < 2:
-        st.info("💡 Selecione um caderno do Sul E um do Nordeste para habilitar a comparação entre regiões.")
+        st.info("💡 Selecione um caderno do Sul E um do Nordeste para habilitar a comparação.")
     else:
         st.subheader(f"Comparação Técnica: {selecionados_nomes[0]} vs {selecionados_nomes[1]}")
         if st.button("Executar Comparação Real"):
-            with st.spinner("Analisando divergências e convergências técnicas..."):
-                res_comp = model.generate_content(instrucao_mestra + "\nTAREFA: Realize uma comparação técnica entre as abordagens destes dois cadernos regionais.")
-                st.markdown(res_comp.text)
+            with st.spinner("Analisando documentos (isso pode demorar devido ao volume de dados)..."):
+                try:
+                    res_comp = model.generate_content(instrucao_mestra + "\nTAREFA: Realize uma comparação técnica entre as abordagens destes dois cadernos regionais.")
+                    st.markdown(res_comp.text)
+                except Exception as e:
+                    if "429" in str(e) or "ResourceExhausted" in str(e):
+                        st.error("⚠️ O volume de dados desses dois cadernos é muito grande para a cota gratuita. Tente comparar cadernos menores ou aguarde um minuto.")
+                    else:
+                        st.error(f"Erro na comparação: {e}")
