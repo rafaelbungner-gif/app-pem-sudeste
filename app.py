@@ -330,7 +330,7 @@ try:
             temperature=0.1,       # 0.1 é ideal para RAG técnico rigoroso. Mais precisão, menos criatividade.
             top_p=0.95,            
             top_k=40,              
-            max_output_tokens=8192 # Aumentado para o limite máximo (8k) para nunca cortar respostas longas
+            max_output_tokens=100000 
         )
     )
 except Exception as e:
@@ -364,7 +364,7 @@ def ler_e_fatiar_pdf(file_id, nome_doc, regiao):
 # ============================================================================
 # 🔍 BUSCADOR INTELIGENTE
 # ============================================================================
-def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=10):
+def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=50):
     """Busca páginas com limite aumentado para mais contexto"""
     paginas_estruturais = []
     for pag in todas_as_paginas:
