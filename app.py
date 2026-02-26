@@ -414,7 +414,7 @@ def ler_e_fatiar_pdf(file_id, nome_doc, regiao):
 # ============================================================================
 # 🔍 BUSCADOR INTELIGENTE
 # ============================================================================
-def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=20):
+def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=40):
     paginas_estruturais = []
     for pag in todas_as_paginas:
         match = re.search(r'Pág.:\s*(\d+)', pag['cabecalho'])
@@ -541,7 +541,7 @@ def criar_prompt_final(pergunta, contexto, tipo="padrao"):
 3. Use bullet points para organizar
 4. Se não encontrar: "Não encontrei essa informação nos cadernos"
 5. NÃO invente dados ou citações
-6. Máximo 600 palavras
+6. Máximo 1200 palavras
 
 ### RESPOSTA
 """,
@@ -827,7 +827,7 @@ with aba1:
                     for t in trechos:
                         contexto += f"\n{t['cabecalho']}\n{t['texto']}\n"
                     
-                    contexto, tokens = limitar_contexto(contexto, 6000)
+                    contexto, tokens = limitar_contexto(contexto, 15000)
                     tipo = detectar_tipo_pergunta(pergunta)
                     prompt = criar_prompt_final(pergunta, contexto, tipo)
                     
