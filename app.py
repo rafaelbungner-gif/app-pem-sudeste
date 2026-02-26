@@ -57,15 +57,19 @@ st.markdown("""
         background: linear-gradient(180deg, #F0F9FF 0%, #E0F2FE 100%);
     }
     
-    /* Header principal com efeito glassmorphism */
+    /* Header principal com imagem de fundo do litoral brasileiro */
     .main-header {
-        background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 50%, #0EA5E9 100%);
-        padding: 40px;
+        background: linear-gradient(135deg, rgba(12, 74, 110, 0.92) 0%, rgba(3, 105, 161, 0.88) 50%, rgba(14, 165, 233, 0.90) 100%),
+                    url('https://images.unsplash.com/photo-1590523741831-ab7f85327541?w=1400&h=500&fit=crop');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        padding: 50px 40px;
         border-radius: 20px;
         color: white;
         text-align: center;
         margin-bottom: 30px;
-        box-shadow: 0 10px 40px rgba(14, 165, 233, 0.3);
+        box-shadow: 0 10px 40px rgba(14, 165, 233, 0.4);
         position: relative;
         overflow: hidden;
     }
@@ -73,34 +77,32 @@ st.markdown("""
     .main-header::before {
         content: '';
         position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-    
-    @keyframes shimmer {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.15) 0%, transparent 60%);
+        pointer-events: none;
     }
     
     .main-header h1 {
-        font-size: 3em;
-        font-weight: 700;
+        font-size: 3.2em;
+        font-weight: 800;
         margin: 0;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
         position: relative;
         z-index: 1;
+        letter-spacing: -1px;
     }
     
     .main-header p {
-        font-size: 1.2em;
-        margin-top: 10px;
+        font-size: 1.3em;
+        margin-top: 12px;
         opacity: 0.95;
         position: relative;
         z-index: 1;
+        font-weight: 400;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
     }
     
     /* Cards personalizados */
@@ -121,10 +123,12 @@ st.markdown("""
     
     .card-sul {
         border-left-color: #10B981;
+        background: linear-gradient(135deg, #FFFFFF 0%, #ECFDF5 100%);
     }
     
     .card-ne {
         border-left-color: #F59E0B;
+        background: linear-gradient(135deg, #FFFFFF 0%, #FFFBEB 100%);
     }
     
     /* Sidebar estilizada */
@@ -132,7 +136,14 @@ st.markdown("""
         background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
         border-radius: 15px;
         padding: 20px;
-        margin: 10px 0;
+        margin: 12px 0;
+        border: 1px solid #E2E8F0;
+    }
+    
+    .sidebar-section h4 {
+        color: #0C4A6E;
+        margin-bottom: 12px;
+        font-size: 1em;
     }
     
     /* Botões personalizados */
@@ -169,6 +180,7 @@ st.markdown("""
         text-align: center;
         color: white;
         box-shadow: 0 4px 15px rgba(12, 74, 110, 0.3);
+        margin: 15px 0;
     }
     
     .metric-value {
@@ -184,30 +196,92 @@ st.markdown("""
     
     /* Badge de status */
     .status-badge {
-        display: inline-block;
-        padding: 5px 15px;
-        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 16px;
+        border-radius: 25px;
         font-size: 0.85em;
         font-weight: 600;
         margin: 5px;
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
     }
     
-    .status-active {
-        background: #D1FAE5;
-        color: #059669;
+    /* Lista de cadernos carregados */
+    .loaded-notebooks {
+        background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+        border-radius: 12px;
+        padding: 15px;
+        margin: 15px 0;
+        border: 1px solid #86EFAC;
     }
     
-    .status-loading {
-        background: #FEF3C7;
-        color: #D97706;
+    .loaded-notebook-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid #BBF7D0;
+        font-size: 0.9em;
+    }
+    
+    .loaded-notebook-item:last-child {
+        border-bottom: none;
+    }
+    
+    .notebook-icon {
+        font-size: 1.3em;
+    }
+    
+    .notebook-region {
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.8em;
+    }
+    
+    .region-sul {
+        background: #10B981;
+        color: white;
+    }
+    
+    .region-ne {
+        background: #F59E0B;
+        color: white;
+    }
+    
+    /* Links na sidebar */
+    .source-link {
+        display: block;
+        background: white;
+        border-radius: 10px;
+        padding: 12px 15px;
+        margin: 8px 0;
+        text-decoration: none;
+        color: #0C4A6E;
+        font-weight: 600;
+        font-size: 0.85em;
+        border: 1px solid #E2E8F0;
+        transition: all 0.3s ease;
+    }
+    
+    .source-link:hover {
+        background: #0EA5E9;
+        color: white;
+        border-color: #0EA5E9;
+    }
+    
+    .source-link-icon {
+        margin-right: 8px;
     }
     
     /* Divider decorativo */
     .wave-divider {
-        height: 50px;
-        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%230EA5E9" fill-opacity="0.2" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
+        height: 60px;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%230EA5E9" fill-opacity="0.15" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
         background-size: cover;
-        margin: 20px 0;
+        margin: 30px 0;
     }
     
     /* Esconder footer padrão do Streamlit */
@@ -224,30 +298,34 @@ st.markdown("""
         padding: 10px 20px;
         font-weight: 600;
     }
+    
+    /* Selectbox estilizada */
+    .stSelectbox label {
+        color: #0C4A6E;
+        font-weight: 600;
+        font-size: 0.9em;
+    }
+    
+    /* Divider na sidebar */
+    .sidebar-divider {
+        border-top: 2px dashed #CBD5E1;
+        margin: 20px 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================================
-# 🌊 HEADER PRINCIPAL COM IMAGEM
+# 🌊 HEADER PRINCIPAL COM IMAGEM DE FUNDO (LITORAL BRASILEIRO)
 # ============================================================================
 st.markdown("""
 <div class="main-header">
     <h1>🌊 Assistente PEM</h1>
-    <p>Plano de Espaço Marinho | Busca Inteligente e Rastreável</p>
-    <div style="margin-top: 15px;">
-        <span class="status-badge status-active">✓ IA Ativa</span>
-        <span class="status-badge status-active">✓ PDF Indexado</span>
-        <span class="status-badge status-active">✓ Multi-Região</span>
+    <p>Busca Inteligente e Rastreável</p>
+    <div style="margin-top: 20px;">
+        <span class="status-badge">✓ IA Ativa</span>
+        <span class="status-badge">✓ PDF Indexado</span>
+        <span class="status-badge">✓ Multi-Região</span>
     </div>
-</div>
-""", unsafe_allow_html=True)
-
-# Imagem de banner (use URLs de imagens reais ou locais)
-st.markdown("""
-<div style="text-align: center; margin: -20px 0 30px 0;">
-    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&h=300&fit=crop" 
-         style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 15px; 
-                box-shadow: 0 4px 20px rgba(0,0,0,0.15);" alt="Ocean Banner">
 </div>
 """, unsafe_allow_html=True)
 
@@ -287,7 +365,8 @@ def ler_e_fatiar_pdf(file_id, nome_doc, regiao):
                     "texto_original": texto_pagina
                 })
         return paginas_fatiadas
-    except:
+    except Exception as ex:
+        st.error(f"Erro ao ler PDF: {ex}")
         return []
 
 # ============================================================================
@@ -325,77 +404,112 @@ def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=8):
     return paginas_finais
 
 # ============================================================================
-# 📚 BARRA LATERAL
+# 📚 BARRA LATERAL APRIMORADA
 # ============================================================================
 with st.sidebar:
+    # Header da sidebar
     st.markdown("""
-    <div style="text-align: center; padding: 20px 0;">
-        <div style="font-size: 3em;">📚</div>
+    <div style="text-align: center; padding: 15px 0;">
+        <div style="font-size: 3.5em;">📚</div>
         <h3 style="color: #0C4A6E; margin: 10px 0;">Biblioteca PEM</h3>
-        <p style="color: #64748B; font-size: 0.9em;">Selecione os cadernos regionais</p>
+        <p style="color: #64748B; font-size: 0.85em;">Cadernos Setoriais Oficiais</p>
     </div>
     """, unsafe_allow_html=True)
     
+    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
+    
+    # Links para os cadernos oficiais
+    st.markdown("**🔗 Fontes Oficiais**")
+    st.markdown("""
+    <a href="https://www.marinha.mil.br/secirm/psrm/pem/cadernos-setoriais-pem-nordeste" 
+       target="_blank" class="source-link">
+        <span class="source-link-icon">🌴</span> Cadernos Nordeste
+    </a>
+    <a href="https://www.marinha.mil.br/secirm/pt-br/psrm/pem/cadernos-setoriais-pem-sul" 
+       target="_blank" class="source-link">
+        <span class="source-link-icon">🗺️</span> Cadernos Sul
+    </a>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
+    
+    # Seleção de cadernos
     st.markdown("<div class='sidebar-section'>", unsafe_allow_html=True)
-    st.markdown("**📍 Região Sul**")
-    escolha_sul = st.selectbox("", list(CADERNOS_SUL.keys()), key="sul_select")
+    st.markdown("<h4>📍 Região Sul</h4>", unsafe_allow_html=True)
+    escolha_sul = st.selectbox("", list(CADERNOS_SUL.keys()), key="sul_select", label_visibility="collapsed")
     st.markdown("</div>", unsafe_allow_html=True)
     
     st.markdown("<div class='sidebar-section'>", unsafe_allow_html=True)
-    st.markdown("**📍 Região Nordeste**")
-    escolha_ne = st.selectbox("", list(CADERNOS_NE.keys()), key="ne_select")
+    st.markdown("<h4>📍 Região Nordeste</h4>", unsafe_allow_html=True)
+    escolha_ne = st.selectbox("", list(CADERNOS_NE.keys()), key="ne_select", label_visibility="collapsed")
     st.markdown("</div>", unsafe_allow_html=True)
     
-    st.divider()
+    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
     
-    # Status dos cadernos ativos
+    # Status dos cadernos ativos - CORRIGIDO PARA MOSTRAR TODOS
     if "cadernos_ativos" not in st.session_state:
         st.session_state.cadernos_ativos = []
+    if "todas_as_paginas_lidas" not in st.session_state:
+        st.session_state.todas_as_paginas_lidas = []
     
     if st.session_state.cadernos_ativos:
-        st.markdown("**✅ Cadernos Carregados:**")
+        st.markdown("""
+        <div class="loaded-notebooks">
+            <h4 style="color: #059669; margin-top: 0; margin-bottom: 10px;">
+                ✅ Cadernos Carregados
+            </h4>
+        """, unsafe_allow_html=True)
+        
         for regiao, nome, _ in st.session_state.cadernos_ativos:
-            icon = "🟢" if regiao == "SUL" else "🟠"
-            st.markdown(f"{icon} **{regiao}**: {nome}")
-    
-    st.divider()
-    
-    # Stats
-    st.markdown("""
-    <div class="metric-card">
-        <div class="metric-value" id="pages-count">0</div>
-        <div class="metric-label">📄 Páginas Indexadas</div>
-    </div>
-    """, unsafe_allow_html=True)
+            if regiao == "SUL":
+                icon = "🗺️"
+                region_class = "region-sul"
+            else:
+                icon = "🌴"
+                region_class = "region-ne"
+            
+            st.markdown(f"""
+            <div class="loaded-notebook-item">
+                <span class="notebook-icon">{icon}</span>
+                <span class="notebook-region {region_class}">{regiao}</span>
+                <span style="color: #374151; flex: 1;">{nome}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Contador de páginas
+        total_paginas = len(st.session_state.todas_as_paginas_lidas)
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">{total_paginas}</div>
+            <div class="metric-label">📄 Páginas Indexadas</div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.info("👈 Selecione os cadernos acima para começar")
 
 # ============================================================================
 # 💾 CONTROLE DE ESTADO E CARREGAMENTO
 # ============================================================================
-if "todas_as_paginas_lidas" not in st.session_state:
-    st.session_state.todas_as_paginas_lidas = []
-
 cadernos_selecionados_agora = []
-if escolha_sul != "Nenhum": 
+if escolha_sul and escolha_sul != "Nenhum": 
     cadernos_selecionados_agora.append(("SUL", escolha_sul, CADERNOS_SUL[escolha_sul]))
-if escolha_ne != "Nenhum": 
+if escolha_ne and escolha_ne != "Nenhum": 
     cadernos_selecionados_agora.append(("NE", escolha_ne, CADERNOS_NE[escolha_ne]))
 
 if cadernos_selecionados_agora != st.session_state.cadernos_ativos:
     st.session_state.todas_as_paginas_lidas = []
-    st.session_state.cadernos_ativos = cadernos_selecionados_agora
+    st.session_state.cadernos_ativos = cadernos_selecionados_agora.copy()
     
     if cadernos_selecionados_agora:
         with st.sidebar.status("📖 Processando documentos...", expanded=True):
-            total_paginas = 0
             for regiao, nome, file_id in cadernos_selecionados_agora:
                 paginas = ler_e_fatiar_pdf(file_id, nome, regiao)
                 st.session_state.todas_as_paginas_lidas.extend(paginas)
-                total_paginas += len(paginas)
-                st.write(f"✓ {regiao} - {nome}: {len(paginas)} páginas")
-            
-            # Atualizar contador
-            st.session_state.total_paginas = total_paginas
-        st.sidebar.success(f"🎉 {total_paginas} páginas prontas!")
+                st.write(f"✓ {regiao} - {nome}: **{len(paginas)}** páginas")
+        st.sidebar.success(f"🎉 Pronto!")
+        st.rerun()
 
 # ============================================================================
 # 📊 CARDS INFORMATIVOS
@@ -505,10 +619,25 @@ with aba1:
 
 with aba2:
     if len(st.session_state.cadernos_ativos) < 2:
-        st.info("""
-        ### 💡 Dica
-        Selecione **um caderno do Sul e um do Nordeste** na barra lateral para habilitar a comparação regional.
-        """)
+        st.markdown("""
+        <div style="background: #FFFBEB; border-radius: 15px; padding: 30px; 
+                    border: 2px solid #FCD34D; text-align: center;">
+            <div style="font-size: 3em; margin-bottom: 15px;">💡</div>
+            <h3 style="color: #92400E; margin-top: 0;">Comparação Regional</h3>
+            <p style="color: #78350F; margin-bottom: 20px;">
+                Selecione <strong>um caderno do Sul e um do Nordeste</strong> na barra lateral 
+                para habilitar a comparação entre as regiões.
+            </p>
+            <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                <span style="background: #10B981; color: white; padding: 8px 20px; border-radius: 20px;">
+                    🗺️ Sul
+                </span>
+                <span style="background: #F59E0B; color: white; padding: 8px 20px; border-radius: 20px;">
+                    🌴 Nordeste
+                </span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     else:
         st.markdown("""
         <div style="background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%); 
@@ -526,7 +655,7 @@ with aba2:
             st.markdown("""
             <div class="info-card card-sul">
                 <h4 style="color: #10B981;">🗺️ Sul</h4>
-                <p style="font-size: 0.9em; color: #64748B;">
+                <p style="font-size: 0.95em; color: #374151; margin-bottom: 0;">
                     """ + st.session_state.cadernos_ativos[0][1] + """
                 </p>
             </div>
@@ -536,7 +665,7 @@ with aba2:
             st.markdown("""
             <div class="info-card card-ne">
                 <h4 style="color: #F59E0B;">🌴 Nordeste</h4>
-                <p style="font-size: 0.9em; color: #64748B;">
+                <p style="font-size: 0.95em; color: #374151; margin-bottom: 0;">
                     """ + st.session_state.cadernos_ativos[1][1] + """
                 </p>
             </div>
@@ -577,14 +706,21 @@ with aba2:
                     st.error("⚠️ Erro na comparação. Tente uma pergunta mais específica.")
 
 # ============================================================================
-#  FOOTER
+# 🌊 FOOTER
 # ============================================================================
 st.markdown("<div class='wave-divider'></div>", unsafe_allow_html=True)
 
 st.markdown("""
 <div style="text-align: center; padding: 30px; color: #64748B; font-size: 0.9em;">
-    <p>🌊 <strong>Assistente PEM</strong> | Plano de Espaço Marinho do Brasil</p>
-    <p style="opacity: 0.7;">Desenvolvido com Streamlit + Google Gemini AI</p>
-    <p style="opacity: 0.5; font-size: 0.8em;">⚠️ As informações devem ser validadas nos documentos oficiais</p>
+    <p>🌊 <strong>Assistente PEM</strong> | Busca Inteligente em Cadernos Setoriais</p>
+    <p style="opacity: 0.7; margin-top: 10px;">
+        <a href="https://www.marinha.mil.br/secirm/psrm/pem" target="_blank" 
+           style="color: #0EA5E9; text-decoration: none;">
+            📌 Fonte Oficial: Marinha do Brasil - SECIRM
+        </a>
+    </p>
+    <p style="opacity: 0.5; font-size: 0.8em; margin-top: 15px;">
+        ⚠️ As informações devem ser validadas nos documentos oficiais
+    </p>
 </div>
 """, unsafe_allow_html=True)
