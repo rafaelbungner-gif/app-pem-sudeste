@@ -18,7 +18,7 @@ CADERNOS_SUL = {
     "PESCA INDUSTRIAL": "1wyb2gyxMZ-WWVK2kkWBG96fi0cRJXlTA",
     "PETRÓLEO E GÁS": "1pdR94_yc_mGPIO9vODRCHOzMkb6mbPcy",
     "SEGURANÇA E DEFESA": "1WQFgZYR4-CJZFVCXtz3ADNvoVqgDs8IG",
-    "TURISMO": "1D9H11ZwDcmwanyWYBltPFXtVAX-Qzwrm"
+    "TURISMO": "1D9H11ZwDcmwanyWYBltPFXtVAX-Qzwrm",
 
     CADERNOS_NE = {
     "Nenhum": None,
