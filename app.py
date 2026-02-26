@@ -5,40 +5,12 @@ import io
 import re
 from PyPDF2 import PdfReader
 
-# ============================================================================
-# 📚 BANCO DE DADOS DOS CADERNOS (IDs DO GOOGLE DRIVE)
-# ============================================================================
-
-CADERNOS_SUL = {
-    "Nenhum": None,
-    "AQUICULTURA": "1J4wtuiPfKtH00wYvzieckJKqXT-CtYfe",
-    "ENERGIAS RENOVÁVEIS": "1lbRv2lQQNEBIsCJDz5Ha03w-ByaAwAJt",
-    "GEOLOGIA E RECURSOS MINERAIS": "1AWbgrbaiqu5uzPTcpyABfD025J8rjWuO",
-    "INTEGRAÇÃO GERCO PEM": "1bPIxGFANNbd4HbaUrB7Bhukd-HzsOoPZ",
-    "MEIO AMBIENTE E MUDANÇA DO CLIMA": "1ONtkFycmqg72t4btG5LWLieqi8XQa20f",
-    "MULTISSETORIAL INVESTIMENTOS": "1mKFtBk9lHezfl0vPzsO358AxZ_HNYmlk",
-    "NAVEGAÇÃO, PORTOS E INDÚSTRIA NAVAL": "1ytOdHmuNLrMJk8laqU2XuBm9e0Zwgv8t",
-    "PESCA ARTESANAL": "1nnfAxqmZvnHKm4ZoVxexUoImDBBm3KuC",
-    "PESCA INDUSTRIAL": "1wyb2gyxMZ-WWVK2kkWBG96fi0cRJXlTA",
-    "PETRÓLEO E GÁS": "1pdR94_yc_mGPIO9vODRCHOzMkb6mbPcy",
-    "SEGURANÇA E DEFESA": "1WQFgZYR4-CJZFVCXtz3ADNvoVqgDs8IG",
-    "TURISMO": "1D9H11ZwDcmwanyWYBltPFXtVAX-Qzwrm"
-}
-
-CADERNOS_NE = {
-    "Nenhum": None,
-    "AQUICULTURA": "1kcOy8uKNonAWo5pA5Aj6ak_eRGhGkKFl",
-    "ENERGIAS RENOVÁVEIS": "1LmPst6oY56lLpGK_TWXxFNG8-CdOS8zV",
-    "ENSINO E PESQUISA DO MAR": "1wYU6AV-4ATcn3kgKtodBXh8Ufs3i3xzA",
-    "GEOLOGIA E RECURSOS MINERAIS": "1_DD0NcFYmhB7YramfF7QTQTsV3ITMURo",
-    "MEIO AMBIENTE E MUDANÇA DO CLIMA": "18zN53AJAZaX445giWdN5FZyg6x3fwyG1",
-    "NAVEGAÇÃO, PORTOS E INDÚSTRIA NAVAL": "1VIqhy5ZmZhQOhNeYWoj2-HSZBkHmGiRR",
-    "PESCA ARTESANAL": "19arloC0UKOKjwOrQqeKDm7WJGFTkBT8x",
-    "PESCA INDUSTRIAL": "1y_3pL2w6iOVZsQlmH0L-hmKUubX863mV",
-    "PETRÓLEO E GÁS NATURAL": "1lG1hWBnibfdX_5MJ_eGMpJS4mVHu4TMx",
-    "SEGURANÇA E DEFESA": "1HCJygxjqxVPFz9Z6yEByi5fFSysi_aqC",
-    "TURISMO": "1kdsI5bGdbIRIPLnXIsPfz9y3XwnY9B-4"
-}
+import streamlit as st
+import google.generativeai as genai
+import requests
+import io
+import re
+from PyPDF2 import PdfReader
 
 # ============================================================================
 # 🎨 CONFIGURAÇÃO DA PÁGINA
@@ -51,7 +23,7 @@ st.set_page_config(
 )
 
 # ============================================================================
-# 💅 ESTILOS CSS PERSONALIZADOS
+# 💅 ESTILOS CSS
 # ============================================================================
 st.markdown("""
 <style>
@@ -281,16 +253,16 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6);
     }
     
-    /* Token counter badge */
-    .token-badge {
+    /* Response quality indicator */
+    .quality-badge {
         display: inline-block;
-        background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
         color: white;
-        padding: 4px 12px;
-        border-radius: 15px;
-        font-size: 0.75em;
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 0.8em;
         font-weight: 600;
-        margin-left: 8px;
+        margin-left: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -311,7 +283,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================================
-# 🔧 CONFIGURAÇÃO DA IA
+# 🔧 CONFIGURAÇÃO DA IA - AJUSTADA PARA QUALIDADE
 # ============================================================================
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
@@ -321,14 +293,14 @@ try:
             modelo_nome = m.name
             break
     if modelo_nome:
-        # Configuração otimizada para reduzir alucinações
+        # Temperature mais baixa para precisão, mas não tão baixa a ponto de limitar qualidade
         model = genai.GenerativeModel(
             modelo_nome,
             generation_config=genai.GenerationConfig(
-                temperature=0.2,      # Baixa = mais determinístico
-                top_p=0.8,            # Mais conservador
-                top_k=40,             # Limita vocabulário
-                max_output_tokens=1500  # Limite de resposta
+                temperature=0.3,      # Equilíbrio: preciso mas ainda natural
+                top_p=0.85,           # Um pouco mais flexível
+                top_k=50,             # Mais vocabulário disponível
+                max_output_tokens=2500  # Respostas mais completas
             )
         )
 except Exception as e:
@@ -362,7 +334,8 @@ def ler_e_fatiar_pdf(file_id, nome_doc, regiao):
 # ============================================================================
 # 🔍 BUSCADOR INTELIGENTE
 # ============================================================================
-def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=8):
+def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=10):
+    """Busca páginas com limite aumentado para mais contexto"""
     paginas_estruturais = []
     for pag in todas_as_paginas:
         match = re.search(r'PÁGINA:\s*(\d+)', pag['cabecalho'])
@@ -394,12 +367,12 @@ def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=8):
     return paginas_finais
 
 # ============================================================================
-# 🎯 NOVO: EXTRATOR DE TRECHOS RELEVANTES (ECONOMIA DE TOKENS)
+# 🎯 EXTRATOR DE TRECHOS - VERSÃO QUALIDADE (NÃO CORTA TANTO)
 # ============================================================================
-def extrair_trechos_relevantes(paginas_filtradas, pergunta, max_caracteres_por_trecho=500):
+def extrair_trechos_relevantes(paginas_filtradas, pergunta, max_caracteres_por_trecho=800):
     """
-    Extrai apenas parágrafos relevantes de cada página.
-    Reduz tokens em ~60% comparado a páginas completas.
+    Extrai parágrafos relevantes PRESERVANDO o contexto completo.
+    Limite maior (800 vs 500) para não perder informações importantes.
     """
     palavras_chave = set(re.findall(r'\w{4,}', pergunta.lower()))
     trechos = []
@@ -408,34 +381,45 @@ def extrair_trechos_relevantes(paginas_filtradas, pergunta, max_caracteres_por_t
         # Divide em parágrafos
         paragrafos = pag['texto_original'].split('\n\n')
         
-        for paragrafo in paragrafos:
+        for i, paragrafo in enumerate(paragrafos):
             paragrafo_limpo = paragrafo.strip()
-            if len(paragrafo_limpo) < 50:
+            if len(paragrafo_limpo) < 40:
                 continue
                 
             # Score de relevância
             score = sum(1 for palavra in palavras_chave if palavra.lower() in paragrafo_limpo.lower())
             
+            # Se o parágrafo é relevante OU está próximo de um parágrafo relevante
             if score >= 1:
+                # Inclui parágrafo anterior e seguinte para contexto (se existirem)
+                contexto_completo = []
+                if i > 0 and len(paragrafos[i-1].strip()) > 30:
+                    contexto_completo.append(paragrafos[i-1].strip())
+                contexto_completo.append(paragrafo_limpo)
+                if i < len(paragrafos) - 1 and len(paragrafos[i+1].strip()) > 30:
+                    contexto_completo.append(paragrafos[i+1].strip())
+                
+                texto_final = '\n\n'.join(contexto_completo)[:max_caracteres_por_trecho]
+                
                 trechos.append({
                     'cabecalho': pag['cabecalho'],
-                    'texto': paragrafo_limpo[:max_caracteres_por_trecho],
+                    'texto': texto_final,
                     'score': score
                 })
     
-    # Ordena por relevância e limita
+    # Ordena por relevância e limita (mais trechos para respostas completas)
     trechos.sort(key=lambda x: x['score'], reverse=True)
-    return trechos[:15]  # Máximo de 15 trechos
+    return trechos[:25]  # Aumentado de 15 para 25
 
 # ============================================================================
-# 📏 CONTROLE DE TOKENS
+# 📏 CONTROLE DE TOKENS - LIMITE MAIOR
 # ============================================================================
 def contar_tokens_estimado(texto):
     """Estimativa: 1 token ≈ 4 caracteres em português"""
     return len(texto) // 4
 
-def limitar_contexto(contexto, max_tokens=2800):
-    """Garante que o contexto não exceda o limite de tokens"""
+def limitar_contexto(contexto, max_tokens=4500):
+    """Limite aumentado de 2800 para 4500 tokens para respostas completas"""
     tokens_atuais = contar_tokens_estimado(contexto)
     
     if tokens_atuais <= max_tokens:
@@ -468,34 +452,40 @@ def detectar_tipo_pergunta(pergunta):
         return "lista"
     elif any(word in p for word in ['resumo', 'explique', 'o que', 'como funciona', 'defina']):
         return "explicacao"
-    elif any(word in p for word in ['impacto', 'consequência', 'efeito', 'resultado']):
+    elif any(word in p for word in ['impacto', 'consequência', 'efeito', 'resultado', 'análise']):
         return "analise"
+    elif any(word in p for word in ['legislação', 'lei', 'norma', 'regulamento', 'marco legal']):
+        return "legislacao"
     else:
         return "padrao"
 
 # ============================================================================
-#  PROMPT OTIMIZADO (ANTI-ALUCINAÇÃO)
+# 🎯 PROMPTS OTIMIZADOS - FOCO EM QUALIDADE + PRECISÃO
 # ============================================================================
 def criar_prompt_final(pergunta, contexto, tipo_pergunta="padrao"):
     """
-    Cria prompt otimizado para reduzir alucinações e economizar tokens.
+    Prompts balanceados: precisão anti-alucinação + respostas completas
     """
     
     prompts = {
         "padrao": f"""
 ### PAPEL
 Você é um assistente técnico especializado em Plano de Espaço Marinho (PEM) do Brasil.
+Sua função é fornecer respostas COMPLETAS e BEM FUNDAMENTADAS baseadas nos documentos.
 
 ### CONTEXTO DOCUMENTAL
 {contexto}
 
-### REGRAS OBRIGATÓRIAS
-✓ Responda APENAS com base no contexto acima
-✓ Cite SEMPRE: `(Região | Caderno | Pág. X)`
-✓ Se não encontrar informação: diga "Não há informação nos cadernos sobre..."
-✓ Máximo 350 palavras
-✓ Use bullet points para listas
-✓ Não invente dados, números ou citações
+### DIRETRIZES DE RESPOSTA
+1. **Completeza**: Desenvolva a resposta de forma abrangente, explorando todos os aspectos relevantes encontrados nos documentos
+2. **Precisão**: Use APENAS informações presentes no contexto acima
+3. **Citações**: Formato obrigatório → `(Região | Caderno | Pág. X)` após cada afirmação importante
+4. **Estrutura**: 
+   - Comece com uma visão geral (2-3 frases)
+   - Desenvolva com tópicos detalhados
+   - Use bullet points para organizar informações
+5. **Transparência**: Se alguma informação não estiver nos documentos, declare claramente
+6. **Extensão**: Resposta completa (400-700 palavras)
 
 ### PERGUNTA
 {pergunta}
@@ -505,19 +495,25 @@ Você é um assistente técnico especializado em Plano de Espaço Marinho (PEM) 
 
         "comparacao": f"""
 ### PAPEL
-Analista técnico de Plano de Espaço Marinho (PEM).
+Analista técnico comparativo de Plano de Espaço Marinho (PEM).
 
 ### CONTEXTO DOCUMENTAL
 {contexto}
 
 ### TAREFA
-Compare as abordagens regionais encontradas nos trechos.
+Compare de forma DETALHADA as abordagens regionais encontradas nos documentos.
+
+### ESTRUTURA DA RESPOSTA
+1. **Visão Geral**: Síntese das principais similaridades e diferenças
+2. **Tabela Comparativa**: Use tabela Markdown com aspectos relevantes
+3. **Análise por Tópico**: Desenvolva cada aspecto com citações
+4. **Conclusão**: Destaque implicações das diferenças encontradas
 
 ### REGRAS
-✓ Use tabela quando possível
-✓ Cite: `(Região | Caderno | Pág. X)`
-✓ Se não houver dados para comparar, informe claramente
+✓ Cite: `(Região | Caderno | Pág. X)` para cada afirmação
+✓ Se não houver dados para uma região, informe explicitamente
 ✓ Não especule sobre diferenças não documentadas
+✓ Resposta completa (500-800 palavras)
 
 ### PERGUNTA
 {pergunta}
@@ -527,18 +523,24 @@ Compare as abordagens regionais encontradas nos trechos.
 
         "lista": f"""
 ### PAPEL
-Assistente técnico PEM.
+Assistente técnico de PEM especializado em catalogação de informações.
 
 ### CONTEXTO DOCUMENTAL
 {contexto}
 
 ### TAREFA
-Liste os itens solicitados com base apenas nos documentos.
+Liste de forma COMPLETA todos os itens relevantes encontrados nos documentos.
+
+### ESTRUTURA
+- Cada item deve ter descrição detalhada (2-3 frases)
+- Inclua citação para cada item: `(Região | Caderno | Pág. X)`
+- Agrupe itens por categoria quando aplicável
+- Informe o total de itens encontrados
 
 ### REGRAS
-✓ Formato: `- Item (fonte: Região | Caderno | Pág. X)`
-✓ Se não encontrar, diga quantos itens foram encontrados
-✓ Não complete com informação externa
+✓ Não omita informações relevantes encontradas
+✓ Se encontrar poucos itens, informe que a documentação é limitada
+✓ Não adicione informações externas
 
 ### PERGUNTA
 {pergunta}
@@ -548,19 +550,25 @@ Liste os itens solicitados com base apenas nos documentos.
 
         "explicacao": f"""
 ### PAPEL
-Especialista em explicação técnica de PEM.
+Especialista em explicação técnica didática de PEM.
 
 ### CONTEXTO DOCUMENTAL
 {contexto}
 
 ### TAREFA
-Explique de forma didática o conceito solicitado.
+Explique o conceito de forma COMPLETA e ACESSÍVEL.
+
+### ESTRUTURA
+1. **Definição**: Conceito principal (2-3 frases)
+2. **Contexto**: Como se aplica ao PEM
+3. **Detalhamento**: Aspectos importantes com exemplos dos documentos
+4. **Implicações**: Relevância prática
 
 ### REGRAS
-✓ 1-2 frases de definição inicial
-✓ Detalhes com citações
-✓ Se o conceito não estiver nos documentos, avise
-✓ Máximo 300 palavras
+✓ Use linguagem técnica mas acessível
+✓ Cite fontes para cada afirmação
+✓ Se o conceito não estiver completo nos documentos, avise
+✓ Resposta completa (400-600 palavras)
 
 ### PERGUNTA
 {pergunta}
@@ -570,18 +578,58 @@ Explique de forma didática o conceito solicitado.
 
         "analise": f"""
 ### PAPEL
-Analista de impactos do Plano de Espaço Marinho.
+Analista de impactos e consequências do Plano de Espaço Marinho.
 
 ### CONTEXTO DOCUMENTAL
 {contexto}
 
 ### TAREFA
-Analise os impactos/consequências mencionados nos documentos.
+Analise de forma ABRANGENTE os impactos/consequências mencionados.
+
+### ESTRUTURA
+1. **Resumo Executivo**: Principais impactos identificados
+2. **Por Categoria**:
+   - 🌿 Ambiental
+   - 👥 Social
+   - 💰 Econômico
+   - ⚖️ Institucional
+3. **Inter-relações**: Como os impactos se conectam
+4. **Lacunas**: O que não está documentado
 
 ### REGRAS
-✓ Separe por categoria (ambiental, social, econômico)
 ✓ Cite fontes para cada afirmação
-✓ Não extrapole além do que está documentado
+✓ Distinga impactos diretos e indiretos quando possível
+✓ Não extrapole além do documentado
+✓ Resposta completa (500-800 palavras)
+
+### PERGUNTA
+{pergunta}
+
+### RESPOSTA
+""",
+
+        "legislacao": f"""
+### PAPEL
+Especialista em marco legal do Plano de Espaço Marinho.
+
+### CONTEXTO DOCUMENTAL
+{contexto}
+
+### TAREFA
+Explique as questões legislativas de forma DETALHADA.
+
+### ESTRUTURA
+1. **Marco Legal Principal**: Leis e normas citadas
+2. **Competências**: Quem regula o quê
+3. **Processos**: Fluxos de licenciamento, fiscalização, etc.
+4. **Desafios**: Lacunas ou conflitos mencionados
+5. **Por Região**: Diferenças entre Sul e Nordeste quando aplicável
+
+### REGRAS
+✓ Cite leis/normas específicas quando mencionadas
+✓ Inclua citação de página para cada informação
+✓ Se houver lacunas na documentação, informe
+✓ Resposta completa (500-800 palavras)
 
 ### PERGUNTA
 {pergunta}
@@ -673,16 +721,6 @@ with st.sidebar:
             <div class="metric-label">📄 Páginas Indexadas</div>
         </div>
         """, unsafe_allow_html=True)
-        
-        # Stats de tokens
-        if st.session_state.stats_tokens["total"] > 0:
-            st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%); 
-                        border-radius: 12px; padding: 15px; color: white; text-align: center;">
-                <div style="font-size: 1.8em; font-weight: 700;">{st.session_state.stats_tokens['total']}</div>
-                <div style="font-size: 0.85em; opacity: 0.9;">🪙 Tokens economizados</div>
-            </div>
-            """, unsafe_allow_html=True)
     else:
         st.info("👈 Selecione os cadernos acima para começar")
 
@@ -720,7 +758,7 @@ with aba1:
         <h3 style="color: #0C4A6E; margin-top: 0;">💬 Como posso ajudar?</h3>
         <p style="color: #64748B; margin-bottom: 0;">
             Faça perguntas sobre zoneamento, conservação, impactos ambientais, 
-            turismo, pesca e demais temas dos cadernos PEM.
+            turismo, pesca, legislação e demais temas dos cadernos PEM.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -742,14 +780,14 @@ with aba1:
             
             with st.chat_message("assistant", avatar="🤖"):
                 with st.spinner("🔍 Buscando e analisando documentos..."):
-                    # 1. Busca páginas relevantes
+                    # 1. Busca páginas relevantes (limite aumentado)
                     paginas_filtradas = buscar_paginas_relevantes(
                         pergunta, 
                         st.session_state.todas_as_paginas_lidas, 
-                        limite_paginas=8
+                        limite_paginas=10  # Aumentado de 8 para 10
                     )
                     
-                    # 2. Extrai apenas trechos relevantes (ECONOMIA DE TOKENS)
+                    # 2. Extrai trechos com contexto preservado
                     trechos = extrair_trechos_relevantes(paginas_filtradas, pergunta)
                     
                     # 3. Monta contexto
@@ -757,25 +795,20 @@ with aba1:
                     for trecho in trechos:
                         contexto_enxuto += f"\n[{trecho['cabecalho']}]\n{trecho['texto']}\n"
                     
-                    # 4. Limita tokens
-                    contexto_otimizado, tokens_contexto = limitar_contexto(contexto_enxuto, max_tokens=2800)
+                    # 4. Limita tokens (limite aumentado para qualidade)
+                    contexto_otimizado, tokens_contexto = limitar_contexto(contexto_enxuto, max_tokens=4500)
                     
                     # 5. Detecta tipo de pergunta
                     tipo_pergunta = detectar_tipo_pergunta(pergunta)
                     
-                    # 6. Cria prompt otimizado
+                    # 6. Cria prompt otimizado para qualidade
                     prompt_final = criar_prompt_final(pergunta, contexto_otimizado, tipo_pergunta)
                     
-                    # Atualiza stats
-                    tokens_estimados = contar_tokens_estimado(prompt_final)
-                    st.session_state.stats_tokens["ultima_resposta"] = tokens_estimados
-                    st.session_state.stats_tokens["total"] += tokens_estimados
-                    
-                    # 7. Mostra fontes
+                    # 7. Mostra fontes com indicador de qualidade
                     with st.expander(f"📚 {len(trechos)} trechos consultados ({tokens_contexto} tokens)", expanded=False):
                         for t in trechos:
                             st.markdown(f"**{t['cabecalho']}** | Relevância: {'🟢' if t['score'] >= 3 else '🟡' if t['score'] >= 2 else '🔵'} ({t['score']})")
-                        st.info(f"💡 Tokens economizados vs. páginas completas: ~{int(tokens_contexto * 0.6)}")
+                        st.success(f"✅ Contexto otimizado: ~{int((1 - tokens_contexto/10000) * 100)} de economia vs. documento completo")
                     
                     try:
                         res = model.generate_content(prompt_final)
@@ -814,7 +847,7 @@ with aba2:
                 paginas_comp = buscar_paginas_relevantes(
                     "diretrizes conflitos zoneamento conservação impacto", 
                     st.session_state.todas_as_paginas_lidas, 
-                    limite_paginas=12
+                    limite_paginas=15
                 )
                 
                 trechos_comp = extrair_trechos_relevantes(paginas_comp, "diretrizes zoneamento conservação impacto")
@@ -823,24 +856,36 @@ with aba2:
                 for t in trechos_comp:
                     contexto_comp += f"\n[{t['cabecalho']}]\n{t['texto']}\n"
                 
-                contexto_comp, tokens_comp = limitar_contexto(contexto_comp, max_tokens=3500)
+                contexto_comp, tokens_comp = limitar_contexto(contexto_comp, max_tokens=5500)
                 
                 prompt_comp = f"""
 ### PAPEL
-Analista técnico de Plano de Espaço Marinho (PEM).
+Analista técnico sênior de Plano de Espaço Marinho (PEM).
 
 ### CONTEXTO
 {contexto_comp}
 
 ### TAREFA
-Compare as abordagens das regiões Sul e Nordeste.
+Compare de forma DETALHADA e TÉCNICA as abordagens das regiões Sul e Nordeste.
+
+### ESTRUTURA OBRIGATÓRIA
+1. **Resumo Executivo** (3-4 frases)
+2. **Tabela Comparativa** com aspectos principais
+3. **Análise por Dimensão**:
+   - Zoneamento e Uso
+   - Licenciamento
+   - Fiscalização
+   - Conflitos
+   - Conservação
+4. **Similaridades Estratégicas**
+5. **Diferenças Relevantes**
+6. **Recomendações** (se aplicável)
 
 ### REGRAS
-✓ Use tabela comparativa
-✓ Cite: `(Região | Caderno | Pág. X)`
-✓ Destaque similaridades E diferenças
-✓ Se não houver dados para uma região, informe
-✓ Máximo 500 palavras
+✓ Cite: `(Região | Caderno | Pág. X)` para cada afirmação
+✓ Use tabelas Markdown para comparações
+✓ Se não houver dados para uma região, informe explicitamente
+✓ Resposta completa e fundamentada (700-1000 palavras)
 
 ### RESPOSTA
 """
@@ -851,7 +896,7 @@ Compare as abordagens das regiões Sul e Nordeste.
                     
                     with st.expander(f"📚 {len(trechos_comp)} fontes da comparação"):
                         for t in trechos_comp:
-                            st.markdown(f"- {t['cabecalho']}")
+                            st.markdown(f"- {t['cabecalho']} (score: {t['score']})")
                 except Exception as e:
                     st.error("⚠️ Erro na comparação.")
 
