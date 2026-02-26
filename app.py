@@ -37,6 +37,13 @@ CADERNOS_NE = {
     "NAVEGAÇÃO, PORTOS E INDÚSTRIA NAVAL": "1VIqhy5ZmZhQOhNeYWoj2-HSZBkHmGiRR"
 }
 
+import streamlit as st
+import google.generativeai as genai
+import requests
+import io
+import re
+from PyPDF2 import PdfReader
+
 # ============================================================================
 # 🎨 CONFIGURAÇÃO DA PÁGINA
 # ============================================================================
@@ -59,17 +66,18 @@ st.markdown("""
     
     /* Header principal com imagem de fundo do litoral brasileiro */
     .main-header {
-        background: linear-gradient(135deg, rgba(12, 74, 110, 0.92) 0%, rgba(3, 105, 161, 0.88) 50%, rgba(14, 165, 233, 0.90) 100%),
-                    url('https://images.unsplash.com/photo-1590523741831-ab7f85327541?w=1400&h=500&fit=crop');
+        background-image: 
+            linear-gradient(135deg, rgba(12, 74, 110, 0.85) 0%, rgba(3, 105, 161, 0.80) 50%, rgba(14, 165, 233, 0.85) 100%),
+            url('https://images.unsplash.com/photo-1590523741831-ab7f85327541?w=1600&h=600&fit=crop&q=80');
         background-size: cover;
         background-position: center;
-        background-attachment: fixed;
-        padding: 50px 40px;
+        background-repeat: no-repeat;
+        padding: 55px 40px;
         border-radius: 20px;
         color: white;
         text-align: center;
         margin-bottom: 30px;
-        box-shadow: 0 10px 40px rgba(14, 165, 233, 0.4);
+        box-shadow: 0 15px 50px rgba(14, 165, 233, 0.35);
         position: relative;
         overflow: hidden;
     }
@@ -81,117 +89,29 @@ st.markdown("""
         left: 0;
         right: 0;
         bottom: 0;
-        background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.15) 0%, transparent 60%);
+        background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.12) 0%, transparent 60%);
         pointer-events: none;
+        z-index: 0;
     }
     
     .main-header h1 {
-        font-size: 3.2em;
+        font-size: 3.5em;
         font-weight: 800;
         margin: 0;
-        text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+        text-shadow: 3px 3px 8px rgba(0,0,0,0.5);
         position: relative;
         z-index: 1;
         letter-spacing: -1px;
     }
     
     .main-header p {
-        font-size: 1.3em;
+        font-size: 1.35em;
         margin-top: 12px;
-        opacity: 0.95;
+        opacity: 0.98;
         position: relative;
         z-index: 1;
         font-weight: 400;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-    }
-    
-    /* Cards personalizados */
-    .info-card {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        margin: 15px 0;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        border-left: 5px solid #0EA5E9;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .info-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-    }
-    
-    .card-sul {
-        border-left-color: #10B981;
-        background: linear-gradient(135deg, #FFFFFF 0%, #ECFDF5 100%);
-    }
-    
-    .card-ne {
-        border-left-color: #F59E0B;
-        background: linear-gradient(135deg, #FFFFFF 0%, #FFFBEB 100%);
-    }
-    
-    /* Sidebar estilizada */
-    .sidebar-section {
-        background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
-        border-radius: 15px;
-        padding: 20px;
-        margin: 12px 0;
-        border: 1px solid #E2E8F0;
-    }
-    
-    .sidebar-section h4 {
-        color: #0C4A6E;
-        margin-bottom: 12px;
-        font-size: 1em;
-    }
-    
-    /* Botões personalizados */
-    .stButton > button {
-        background: linear-gradient(135deg, #0369A1 0%, #0EA5E9 100%);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        padding: 12px 30px;
-        font-weight: 600;
-        font-size: 1em;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6);
-    }
-    
-    /* Container de chat */
-    .chat-container {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    }
-    
-    /* Métricas e stats */
-    .metric-card {
-        background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%);
-        border-radius: 15px;
-        padding: 20px;
-        text-align: center;
-        color: white;
-        box-shadow: 0 4px 15px rgba(12, 74, 110, 0.3);
-        margin: 15px 0;
-    }
-    
-    .metric-value {
-        font-size: 2.5em;
-        font-weight: 700;
-    }
-    
-    .metric-label {
-        font-size: 0.9em;
-        opacity: 0.9;
-        margin-top: 5px;
+        text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
     }
     
     /* Badge de status */
@@ -199,29 +119,54 @@ st.markdown("""
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 6px 16px;
+        padding: 7px 18px;
         border-radius: 25px;
         font-size: 0.85em;
         font-weight: 600;
-        margin: 5px;
-        background: rgba(255,255,255,0.2);
-        backdrop-filter: blur(10px);
+        margin: 6px;
+        background: rgba(255,255,255,0.18);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.25);
+        transition: all 0.3s ease;
+    }
+    
+    .status-badge:hover {
+        background: rgba(255,255,255,0.28);
+        transform: translateY(-2px);
+    }
+    
+    /* Sidebar estilizada */
+    .sidebar-section {
+        background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 12px 0;
+        border: 1px solid rgba(255,255,255,0.15);
+        box-shadow: 0 4px 15px rgba(12, 74, 110, 0.25);
+    }
+    
+    .sidebar-section h4 {
+        color: white;
+        margin-bottom: 12px;
+        font-size: 1em;
+        font-weight: 600;
     }
     
     /* Lista de cadernos carregados */
     .loaded-notebooks {
         background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
         border-radius: 12px;
-        padding: 15px;
+        padding: 18px;
         margin: 15px 0;
         border: 1px solid #86EFAC;
+        box-shadow: 0 3px 12px rgba(16, 185, 129, 0.15);
     }
     
     .loaded-notebook-item {
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 8px 0;
+        padding: 10px 0;
         border-bottom: 1px solid #BBF7D0;
         font-size: 0.9em;
     }
@@ -231,55 +176,90 @@ st.markdown("""
     }
     
     .notebook-icon {
-        font-size: 1.3em;
+        font-size: 1.4em;
     }
     
     .notebook-region {
         font-weight: 700;
-        padding: 2px 8px;
-        border-radius: 6px;
-        font-size: 0.8em;
+        padding: 3px 10px;
+        border-radius: 8px;
+        font-size: 0.75em;
+        text-transform: uppercase;
     }
     
     .region-sul {
-        background: #10B981;
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
         color: white;
     }
     
     .region-ne {
-        background: #F59E0B;
+        background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
         color: white;
     }
     
     /* Links na sidebar */
     .source-link {
-        display: block;
-        background: white;
-        border-radius: 10px;
-        padding: 12px 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+        border-radius: 12px;
+        padding: 14px 16px;
         margin: 8px 0;
         text-decoration: none;
         color: #0C4A6E;
         font-weight: 600;
-        font-size: 0.85em;
+        font-size: 0.88em;
         border: 1px solid #E2E8F0;
         transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
     
     .source-link:hover {
-        background: #0EA5E9;
+        background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
         color: white;
-        border-color: #0EA5E9;
+        border-color: #0284C7;
+        transform: translateX(5px);
+        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.35);
     }
     
     .source-link-icon {
-        margin-right: 8px;
+        font-size: 1.3em;
+    }
+    
+    /* Métricas e stats */
+    .metric-card {
+        background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%);
+        border-radius: 15px;
+        padding: 22px;
+        text-align: center;
+        color: white;
+        box-shadow: 0 6px 20px rgba(12, 74, 110, 0.35);
+        margin: 15px 0;
+    }
+    
+    .metric-value {
+        font-size: 2.8em;
+        font-weight: 800;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .metric-label {
+        font-size: 0.92em;
+        opacity: 0.92;
+        margin-top: 6px;
+    }
+    
+    /* Divider na sidebar */
+    .sidebar-divider {
+        border-top: 2px dashed rgba(255,255,255,0.25);
+        margin: 20px 0;
     }
     
     /* Divider decorativo */
     .wave-divider {
         height: 60px;
-        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%230EA5E9" fill-opacity="0.15" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
+        background: url('image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%230EA5E9" fill-opacity="0.15" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
         background-size: cover;
         margin: 30px 0;
     }
@@ -306,10 +286,22 @@ st.markdown("""
         font-size: 0.9em;
     }
     
-    /* Divider na sidebar */
-    .sidebar-divider {
-        border-top: 2px dashed #CBD5E1;
-        margin: 20px 0;
+    /* Botões personalizados */
+    .stButton > button {
+        background: linear-gradient(135deg, #0369A1 0%, #0EA5E9 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -321,7 +313,7 @@ st.markdown("""
 <div class="main-header">
     <h1>🌊 Assistente PEM</h1>
     <p>Busca Inteligente e Rastreável</p>
-    <div style="margin-top: 20px;">
+    <div style="margin-top: 22px;">
         <span class="status-badge">✓ IA Ativa</span>
         <span class="status-badge">✓ PDF Indexado</span>
         <span class="status-badge">✓ Multi-Região</span>
@@ -407,16 +399,15 @@ def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=8):
 # 📚 BARRA LATERAL APRIMORADA
 # ============================================================================
 with st.sidebar:
-    # Header da sidebar
+    # Header da sidebar com ícone
     st.markdown("""
-    <div style="text-align: center; padding: 15px 0;">
-        <div style="font-size: 3.5em;">📚</div>
-        <h3 style="color: #0C4A6E; margin: 10px 0;">Biblioteca PEM</h3>
-        <p style="color: #64748B; font-size: 0.85em;">Cadernos Setoriais Oficiais</p>
+    <div style="text-align: center; padding: 20px 0; background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%); 
+                border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(12, 74, 110, 0.3);">
+        <div style="font-size: 4em; margin-bottom: 5px;">📚</div>
+        <h3 style="color: white; margin: 10px 0; font-weight: 700;">Biblioteca PEM</h3>
+        <p style="color: rgba(255,255,255,0.85); font-size: 0.85em; margin: 0;">Cadernos Setoriais Oficiais</p>
     </div>
     """, unsafe_allow_html=True)
-    
-    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
     
     # Links para os cadernos oficiais
     st.markdown("**🔗 Fontes Oficiais**")
@@ -433,7 +424,7 @@ with st.sidebar:
     
     st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
     
-    # Seleção de cadernos
+    # Seleção de cadernos - SEÇÕES COLORIDAS
     st.markdown("<div class='sidebar-section'>", unsafe_allow_html=True)
     st.markdown("<h4>📍 Região Sul</h4>", unsafe_allow_html=True)
     escolha_sul = st.selectbox("", list(CADERNOS_SUL.keys()), key="sul_select", label_visibility="collapsed")
@@ -446,7 +437,7 @@ with st.sidebar:
     
     st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
     
-    # Status dos cadernos ativos - CORRIGIDO PARA MOSTRAR TODOS
+    # Status dos cadernos ativos
     if "cadernos_ativos" not in st.session_state:
         st.session_state.cadernos_ativos = []
     if "todas_as_paginas_lidas" not in st.session_state:
@@ -455,7 +446,7 @@ with st.sidebar:
     if st.session_state.cadernos_ativos:
         st.markdown("""
         <div class="loaded-notebooks">
-            <h4 style="color: #059669; margin-top: 0; margin-bottom: 10px;">
+            <h4 style="color: #059669; margin-top: 0; margin-bottom: 12px; font-weight: 700;">
                 ✅ Cadernos Carregados
             </h4>
         """, unsafe_allow_html=True)
@@ -472,7 +463,7 @@ with st.sidebar:
             <div class="loaded-notebook-item">
                 <span class="notebook-icon">{icon}</span>
                 <span class="notebook-region {region_class}">{regiao}</span>
-                <span style="color: #374151; flex: 1;">{nome}</span>
+                <span style="color: #374151; flex: 1; font-weight: 500;">{nome}</span>
             </div>
             """, unsafe_allow_html=True)
         
@@ -510,41 +501,6 @@ if cadernos_selecionados_agora != st.session_state.cadernos_ativos:
                 st.write(f"✓ {regiao} - {nome}: **{len(paginas)}** páginas")
         st.sidebar.success(f"🎉 Pronto!")
         st.rerun()
-
-# ============================================================================
-# 📊 CARDS INFORMATIVOS
-# ============================================================================
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown("""
-    <div class="info-card card-sul">
-        <h4 style="color: #10B981; margin-top: 0;">🗺️ Região Sul</h4>
-        <p style="color: #64748B; font-size: 0.9em; margin-bottom: 0;">
-            Cadernos técnicos com diretrizes para o espaço marinho do sul do Brasil.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col2:
-    st.markdown("""
-    <div class="info-card card-ne">
-        <h4 style="color: #F59E0B; margin-top: 0;">🌴 Região Nordeste</h4>
-        <p style="color: #64748B; font-size: 0.9em; margin-bottom: 0;">
-            Documentação completa sobre planejamento marinho do nordeste brasileiro.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col3:
-    st.markdown("""
-    <div class="info-card">
-        <h4 style="color: #0EA5E9; margin-top: 0;">🤖 IA Especializada</h4>
-        <p style="color: #64748B; font-size: 0.9em; margin-bottom: 0;">
-            Respostas baseadas exclusivamente nos documentos oficiais do PEM.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
 
 # ============================================================================
 # 📑 ABAS PRINCIPAIS
@@ -620,19 +576,21 @@ with aba1:
 with aba2:
     if len(st.session_state.cadernos_ativos) < 2:
         st.markdown("""
-        <div style="background: #FFFBEB; border-radius: 15px; padding: 30px; 
-                    border: 2px solid #FCD34D; text-align: center;">
-            <div style="font-size: 3em; margin-bottom: 15px;">💡</div>
-            <h3 style="color: #92400E; margin-top: 0;">Comparação Regional</h3>
-            <p style="color: #78350F; margin-bottom: 20px;">
+        <div style="background: #FFFBEB; border-radius: 15px; padding: 35px; 
+                    border: 2px solid #FCD34D; text-align: center; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);">
+            <div style="font-size: 3.5em; margin-bottom: 15px;">💡</div>
+            <h3 style="color: #92400E; margin-top: 0; font-size: 1.5em;">Comparação Regional</h3>
+            <p style="color: #78350F; margin-bottom: 25px; font-size: 1.05em;">
                 Selecione <strong>um caderno do Sul e um do Nordeste</strong> na barra lateral 
                 para habilitar a comparação entre as regiões.
             </p>
             <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
-                <span style="background: #10B981; color: white; padding: 8px 20px; border-radius: 20px;">
+                <span style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); 
+                            color: white; padding: 10px 25px; border-radius: 25px; font-weight: 600;">
                     🗺️ Sul
                 </span>
-                <span style="background: #F59E0B; color: white; padding: 8px 20px; border-radius: 20px;">
+                <span style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); 
+                            color: white; padding: 10px 25px; border-radius: 25px; font-weight: 600;">
                     🌴 Nordeste
                 </span>
             </div>
@@ -641,9 +599,10 @@ with aba2:
     else:
         st.markdown("""
         <div style="background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%); 
-                    border-radius: 15px; padding: 25px; color: white; margin-bottom: 20px;">
-            <h3 style="margin-top: 0;">⚖️ Comparação Estratégica Regional</h3>
-            <p style="margin-bottom: 0; opacity: 0.9;">
+                    border-radius: 15px; padding: 25px; color: white; margin-bottom: 20px;
+                    box-shadow: 0 6px 20px rgba(12, 74, 110, 0.35);">
+            <h3 style="margin-top: 0; font-size: 1.4em;">⚖️ Comparação Estratégica Regional</h3>
+            <p style="margin-bottom: 0; opacity: 0.92;">
                 Analise diferenças e similaridades nas diretrizes entre as regiões Sul e Nordeste.
             </p>
         </div>
@@ -652,21 +611,25 @@ with aba2:
         col_comp1, col_comp2 = st.columns(2)
         
         with col_comp1:
-            st.markdown("""
-            <div class="info-card card-sul">
-                <h4 style="color: #10B981;">🗺️ Sul</h4>
-                <p style="font-size: 0.95em; color: #374151; margin-bottom: 0;">
-                    """ + st.session_state.cadernos_ativos[0][1] + """
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); 
+                        border-radius: 15px; padding: 20px; border: 2px solid #10B981;
+                        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);">
+                <h4 style="color: #10B981; margin-top: 0;">🗺️ Sul</h4>
+                <p style="color: #374151; margin-bottom: 0; font-weight: 500;">
+                    {st.session_state.cadernos_ativos[0][1]}
                 </p>
             </div>
             """, unsafe_allow_html=True)
         
         with col_comp2:
-            st.markdown("""
-            <div class="info-card card-ne">
-                <h4 style="color: #F59E0B;">🌴 Nordeste</h4>
-                <p style="font-size: 0.95em; color: #374151; margin-bottom: 0;">
-                    """ + st.session_state.cadernos_ativos[1][1] + """
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); 
+                        border-radius: 15px; padding: 20px; border: 2px solid #F59E0B;
+                        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);">
+                <h4 style="color: #F59E0B; margin-top: 0;">🌴 Nordeste</h4>
+                <p style="color: #374151; margin-bottom: 0; font-weight: 500;">
+                    {st.session_state.cadernos_ativos[1][1]}
                 </p>
             </div>
             """, unsafe_allow_html=True)
@@ -713,13 +676,13 @@ st.markdown("<div class='wave-divider'></div>", unsafe_allow_html=True)
 st.markdown("""
 <div style="text-align: center; padding: 30px; color: #64748B; font-size: 0.9em;">
     <p>🌊 <strong>Assistente PEM</strong> | Busca Inteligente em Cadernos Setoriais</p>
-    <p style="opacity: 0.7; margin-top: 10px;">
+    <p style="opacity: 0.7; margin-top: 12px;">
         <a href="https://www.marinha.mil.br/secirm/psrm/pem" target="_blank" 
-           style="color: #0EA5E9; text-decoration: none;">
+           style="color: #0EA5E9; text-decoration: none; font-weight: 600;">
             📌 Fonte Oficial: Marinha do Brasil - SECIRM
         </a>
     </p>
-    <p style="opacity: 0.5; font-size: 0.8em; margin-top: 15px;">
+    <p style="opacity: 0.5; font-size: 0.8em; margin-top: 18px;">
         ⚠️ As informações devem ser validadas nos documentos oficiais
     </p>
 </div>
