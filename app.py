@@ -311,26 +311,28 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================================
-# 🔧 CONFIGURAÇÃO DA IA - AJUSTADA PARA QUALIDADE
+# 🔧 CONFIGURAÇÃO DA IA - ATUALIZADA PARA GEMINI 1.5
 # ============================================================================
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    modelo_nome = None
-    for m in genai.list_models():
-        if 'generateContent' in m.supported_generation_methods:
-            modelo_nome = m.name
-            break
-    if modelo_nome:
-        # Temperature mais baixa para precisão, mas não tão baixa a ponto de limitar qualidade
-        model = genai.GenerativeModel(
-            modelo_nome,
-            generation_config=genai.GenerationConfig(
-                temperature=0.3,      # Equilíbrio: preciso mas ainda natural
-                top_p=0.85,           # Um pouco mais flexível
-                top_k=50,             # Mais vocabulário disponível
-                max_output_tokens=2500  # Respostas mais completas
-            )
+    
+    # Forçar o uso do Gemini 1.5 Pro (ou 'gemini-1.5-flash' se quiser mais rapidez)
+    # O 1.5 tem até 2 milhões de tokens de contexto, ele engole PDFs inteiros rindo.
+    modelo_nome = 'gemini-1.5-pro'
+    
+    # Usar System Instructions reduz drasticamente a alucinação
+    instrucao_sistema = "Você é um assistente técnico sênior especializado no Plano de Espaço Marinho (PEM) do Brasil. Sua regra de ouro é: baseie-se estrita e APENAS nos documentos fornecidos. Nunca invente dados, nomes ou leis. Se a resposta não estiver nos trechos, declare a lacuna. Cite sempre a Região, Caderno e Página."
+    
+    model = genai.GenerativeModel(
+        model_name=modelo_nome,
+        system_instruction=instrucao_sistema,
+        generation_config=genai.GenerationConfig(
+            temperature=0.1,       # 0.1 é ideal para RAG técnico rigoroso. Mais precisão, menos criatividade.
+            top_p=0.95,            
+            top_k=40,              
+            max_output_tokens=8192 # Aumentado para o limite máximo (8k) para nunca cortar respostas longas
         )
+    )
 except Exception as e:
     st.error(f"⚠️ Erro de conexão com o Google AI: {e}")
 
@@ -445,13 +447,14 @@ def extrair_trechos_relevantes(paginas_filtradas, pergunta, max_caracteres_por_t
 def contar_tokens_estimado(texto):
     """Estimativa: 1 token ≈ 4 caracteres em português"""
     return len(texto) // 4
-
-def limitar_contexto(contexto, max_tokens=4500):
-    """Limite aumentado de 2800 para 4500 tokens para respostas completas"""
+    
+def limitar_contexto(contexto, max_tokens=100000): # ← AUMENTE DE 4500 PARA 100.000
+    """Limite ampliado radicalmente para aproveitar a janela do Gemini 1.5"""
     tokens_atuais = contar_tokens_estimado(contexto)
     
     if tokens_atuais <= max_tokens:
         return contexto, tokens_atuais
+    # ... resto da função igual ...
     
     linhas = contexto.split('\n')
     contexto_reduzido = []
