@@ -51,7 +51,7 @@ st.set_page_config(
 )
 
 # ============================================================================
-# 💅 ESTILOS CSS
+# 💅 ESTILOS CSS PERSONALIZADOS
 # ============================================================================
 st.markdown("""
 <style>
@@ -281,16 +281,52 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6);
     }
     
-    /* Response quality indicator */
-    .quality-badge {
-        display: inline-block;
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    /* Tabelas Markdown */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    th {
+        background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%);
         color: white;
-        padding: 5px 14px;
-        border-radius: 20px;
-        font-size: 0.8em;
+        padding: 14px 18px;
+        text-align: left;
         font-weight: 600;
-        margin-left: 10px;
+        font-size: 0.95em;
+    }
+    
+    td {
+        padding: 14px 18px;
+        border-bottom: 1px solid #E2E8F0;
+        color: #374151;
+        line-height: 1.6;
+        font-size: 0.92em;
+    }
+    
+    tr:hover {
+        background: #F8FAFC;
+    }
+    
+    tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Citações */
+    .citation {
+        display: inline-block;
+        background: #E0F2FE;
+        color: #0369A1;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.75em;
+        font-weight: 600;
+        margin-left: 6px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -311,41 +347,40 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================================
-# 🔧 CONFIGURAÇÃO DA IA (COM BUSCA AUTOMÁTICA DO MELHOR MODELO)
+# 🔧 CONFIGURAÇÃO DA IA
 # ============================================================================
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     
-    # 1. Busca todos os modelos disponíveis na sua chave
     modelos_disponiveis = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
     
-    # 2. Escolhe o melhor modelo disponível automaticamente
     if 'models/gemini-1.5-pro-latest' in modelos_disponiveis:
         modelo_nome = 'models/gemini-1.5-pro-latest'
     elif 'models/gemini-1.5-flash-latest' in modelos_disponiveis:
         modelo_nome = 'models/gemini-1.5-flash-latest'
     elif 'models/gemini-1.0-pro' in modelos_disponiveis:
         modelo_nome = 'models/gemini-1.0-pro'
-    elif 'models/gemini-pro' in modelos_disponiveis:
-        modelo_nome = 'models/gemini-pro'
     else:
-        modelo_nome = modelos_disponiveis[0] # Pega o primeiro que funcionar como último recurso
-        
-    st.sidebar.caption(f"🤖 Modelo ativo: `{modelo_nome.replace('models/', '')}`")
+        modelo_nome = modelos_disponiveis[0] if modelos_disponiveis else 'models/gemini-pro'
+    
+    st.sidebar.caption(f"🤖 Modelo: `{modelo_nome.replace('models/', '')}`")
 
-    instrucao_sistema = """Você é um analista técnico de alto rigor metodológico especializado no Plano de Espaço Marinho (PEM) do Brasil. 
-    Regra de Ouro: Baseie sua resposta ESTRITAMENTE nos trechos fornecidos. Não invente ou presuma informações.
-    Se a resposta não estiver nos trechos, declare claramente: 'Não encontrei essa informação nos cadernos selecionados'.
-    Citação Obrigatória: Ao final de cada afirmação técnica, cite (Região | Caderno | Página X)."""
+    instrucao_sistema = """Você é um analista técnico de alto rigor especializado no Plano de Espaço Marinho (PEM) do Brasil.
+    REGRAS OBRIGATÓRIAS:
+    1. Baseie-se ESTRITAMENTE nos trechos fornecidos
+    2. Cada afirmação DEVE ter citação: (Região | Caderno | Pág. X)
+    3. Se não encontrar informação, diga: "Não encontrei essa informação nos cadernos"
+    4. NÃO invente dados, leis, números ou citações
+    5. Para tabelas: máximo 2 frases por célula, sempre com citação"""
 
     model = genai.GenerativeModel(
         model_name=modelo_nome,
         system_instruction=instrucao_sistema,
         generation_config=genai.GenerationConfig(
-            temperature=0.1,       # Extrema precisão
-            top_p=0.95,
+            temperature=0.15,
+            top_p=0.85,
             top_k=40,
-            max_output_tokens=8192 # Evita que a resposta seja cortada
+            max_output_tokens=8192
         )
     )
 except Exception as e:
@@ -365,7 +400,7 @@ def ler_e_fatiar_pdf(file_id, nome_doc, regiao):
         for i, page in enumerate(reader.pages):
             texto_pagina = page.extract_text()
             if texto_pagina:
-                cabecalho = f"[CADERNO: {regiao} - {nome_doc} | PÁGINA: {i+1}]"
+                cabecalho = f"[{regiao} | {nome_doc} | Pág. {i+1}]"
                 paginas_fatiadas.append({
                     "cabecalho": cabecalho,
                     "texto": texto_pagina.lower(),
@@ -379,19 +414,17 @@ def ler_e_fatiar_pdf(file_id, nome_doc, regiao):
 # ============================================================================
 # 🔍 BUSCADOR INTELIGENTE
 # ============================================================================
-def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=50):
-    """Busca páginas com limite aumentado para mais contexto"""
+def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=20):
     paginas_estruturais = []
     for pag in todas_as_paginas:
-        match = re.search(r'PÁGINA:\s*(\d+)', pag['cabecalho'])
+        match = re.search(r'Pág.:\s*(\d+)', pag['cabecalho'])
         if match and int(match.group(1)) <= 6:
             paginas_estruturais.append(pag)
 
     palavras_pergunta = re.findall(r'\w+', pergunta.lower())
     palavras_ignoradas = {'o', 'a', 'os', 'as', 'de', 'do', 'da', 'em', 'no', 'na', 
-                          'para', 'com', 'que', 'quais', 'qual', 'como', 'sobre', 
-                          'diferença', 'entre'}
-    palavras_chave = [p for p in palavras_pergunta if p not in palavras_ignoradas and len(p) > 2]
+                          'para', 'com', 'que', 'quais', 'qual', 'como', 'sobre'}
+    palavras_chave = [p for p in palavras_pergunta if p not in palavras_ignoradas and len(p) > 3]
     
     melhores_paginas = []
     if palavras_chave:
@@ -412,39 +445,31 @@ def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=50):
     return paginas_finais
 
 # ============================================================================
-# 🎯 EXTRATOR DE TRECHOS - VERSÃO QUALIDADE (NÃO CORTA TANTO)
+# 🎯 EXTRATOR DE TRECHOS RELEVANTES
 # ============================================================================
-def extrair_trechos_relevantes(paginas_filtradas, pergunta, max_caracteres_por_trecho=800):
-    """
-    Extrai parágrafos relevantes PRESERVANDO o contexto completo.
-    Limite maior (800 vs 500) para não perder informações importantes.
-    """
+def extrair_trechos_relevantes(paginas_filtradas, pergunta, max_caracteres=700):
     palavras_chave = set(re.findall(r'\w{4,}', pergunta.lower()))
     trechos = []
     
     for pag in paginas_filtradas:
-        # Divide em parágrafos
         paragrafos = pag['texto_original'].split('\n\n')
         
         for i, paragrafo in enumerate(paragrafos):
             paragrafo_limpo = paragrafo.strip()
-            if len(paragrafo_limpo) < 40:
+            if len(paragrafo_limpo) < 50:
                 continue
-                
-            # Score de relevância
+            
             score = sum(1 for palavra in palavras_chave if palavra.lower() in paragrafo_limpo.lower())
             
-            # Se o parágrafo é relevante OU está próximo de um parágrafo relevante
-            if score >= 1:
-                # Inclui parágrafo anterior e seguinte para contexto (se existirem)
+            if score >= 2:
                 contexto_completo = []
-                if i > 0 and len(paragrafos[i-1].strip()) > 30:
+                if i > 0 and len(paragrafos[i-1].strip()) > 40:
                     contexto_completo.append(paragrafos[i-1].strip())
                 contexto_completo.append(paragrafo_limpo)
-                if i < len(paragrafos) - 1 and len(paragrafos[i+1].strip()) > 30:
+                if i < len(paragrafos) - 1 and len(paragrafos[i+1].strip()) > 40:
                     contexto_completo.append(paragrafos[i+1].strip())
                 
-                texto_final = '\n\n'.join(contexto_completo)[:max_caracteres_por_trecho]
+                texto_final = '\n\n'.join(contexto_completo)[:max_caracteres]
                 
                 trechos.append({
                     'cabecalho': pag['cabecalho'],
@@ -452,36 +477,29 @@ def extrair_trechos_relevantes(paginas_filtradas, pergunta, max_caracteres_por_t
                     'score': score
                 })
     
-    # Ordena por relevância e limita (mais trechos para respostas completas)
     trechos.sort(key=lambda x: x['score'], reverse=True)
-    return trechos[:25]  # Aumentado de 15 para 25
+    return trechos[:25]
 
 # ============================================================================
-# 📏 CONTROLE DE TOKENS - LIMITE MAIOR
+# 📏 CONTROLE DE TOKENS
 # ============================================================================
-def contar_tokens_estimado(texto):
-    """Estimativa: 1 token ≈ 4 caracteres em português"""
+def contar_tokens(texto):
     return len(texto) // 4
-    
-def limitar_contexto(contexto, max_tokens=100000): # ← AUMENTE DE 4500 PARA 100.000
-    """Limite ampliado radicalmente para aproveitar a janela do Gemini 1.5"""
-    tokens_atuais = contar_tokens_estimado(contexto)
-    
+
+def limitar_contexto(contexto, max_tokens=8000):
+    tokens_atuais = contar_tokens(contexto)
     if tokens_atuais <= max_tokens:
         return contexto, tokens_atuais
-    # ... resto da função igual ...
     
     linhas = contexto.split('\n')
     contexto_reduzido = []
     tokens_usados = 0
     
     for linha in linhas:
-        tokens_linha = contar_tokens_estimado(linha)
+        tokens_linha = contar_tokens(linha)
         if tokens_usados + tokens_linha <= max_tokens:
             contexto_reduzido.append(linha)
             tokens_usados += tokens_linha
-        else:
-            break
     
     return '\n'.join(contexto_reduzido), tokens_usados
 
@@ -489,202 +507,192 @@ def limitar_contexto(contexto, max_tokens=100000): # ← AUMENTE DE 4500 PARA 10
 # 🎯 DETECTOR DE TIPO DE PERGUNTA
 # ============================================================================
 def detectar_tipo_pergunta(pergunta):
-    """Detecta o tipo de pergunta para ajustar o prompt"""
     p = pergunta.lower()
-    
-    if any(word in p for word in ['compare', 'diferença', 'diferenças', 'entre', 'vs', 'versus']):
+    if any(w in p for w in ['compare', 'diferença', 'diferenças', 'entre', 'vs', 'versus']):
         return "comparacao"
-    elif any(word in p for word in ['liste', 'listar', 'quais', 'cite', 'mencione']):
+    elif any(w in p for w in ['liste', 'listar', 'quais', 'cite', 'mencione']):
         return "lista"
-    elif any(word in p for word in ['resumo', 'explique', 'o que', 'como funciona', 'defina']):
-        return "explicacao"
-    elif any(word in p for word in ['impacto', 'consequência', 'efeito', 'resultado', 'análise']):
-        return "analise"
-    elif any(word in p for word in ['legislação', 'lei', 'norma', 'regulamento', 'marco legal']):
+    elif any(w in p for w in ['legislação', 'lei', 'norma', 'regulamento', 'marco legal']):
         return "legislacao"
-    else:
-        return "padrao"
+    elif any(w in p for w in ['impacto', 'consequência', 'efeito', 'resultado']):
+        return "analise"
+    return "padrao"
 
 # ============================================================================
-# 🎯 PROMPTS OTIMIZADOS - FOCO EM QUALIDADE + PRECISÃO
+# 🎯 PROMPTS OTIMIZADOS
 # ============================================================================
-def criar_prompt_final(pergunta, contexto, tipo_pergunta="padrao"):
-    """
-    Prompts balanceados: precisão anti-alucinação + respostas completas
-    """
+def criar_prompt_final(pergunta, contexto, tipo="padrao"):
     
     prompts = {
         "padrao": f"""
-### PAPEL
-Você é um assistente técnico especializado em Plano de Espaço Marinho (PEM) do Brasil.
-Sua função é fornecer respostas COMPLETAS e BEM FUNDAMENTADAS baseadas nos documentos.
-
 ### CONTEXTO DOCUMENTAL
 {contexto}
 
-### DIRETRIZES DE RESPOSTA
-1. **Completeza**: Desenvolva a resposta de forma abrangente, explorando todos os aspectos relevantes encontrados nos documentos
-2. **Precisão**: Use APENAS informações presentes no contexto acima
-3. **Citações**: Formato obrigatório → `(Região | Caderno | Pág. X)` após cada afirmação importante
-4. **Estrutura**: 
-   - Comece com uma visão geral (2-3 frases)
-   - Desenvolva com tópicos detalhados
-   - Use bullet points para organizar informações
-5. **Transparência**: Se alguma informação não estiver nos documentos, declare claramente
-6. **Extensão**: Resposta completa (400-700 palavras)
+---
 
 ### PERGUNTA
 {pergunta}
+
+---
+
+### INSTRUÇÕES
+1. Responda APENAS com base no contexto acima
+2. Citação obrigatória: (Região | Caderno | Pág. X) após cada afirmação
+3. Use bullet points para organizar
+4. Se não encontrar: "Não encontrei essa informação nos cadernos"
+5. NÃO invente dados ou citações
+6. Máximo 600 palavras
 
 ### RESPOSTA
 """,
 
         "comparacao": f"""
-### PAPEL
-Analista técnico comparativo de Plano de Espaço Marinho (PEM).
-
 ### CONTEXTO DOCUMENTAL
 {contexto}
 
+---
+
 ### TAREFA
-Compare de forma DETALHADA as abordagens regionais encontradas nos documentos.
+Compare Sul vs Nordeste sobre: {pergunta}
 
-### ESTRUTURA DA RESPOSTA
-1. **Visão Geral**: Síntese das principais similaridades e diferenças
-2. **Tabela Comparativa**: Use tabela Markdown com aspectos relevantes
-3. **Análise por Tópico**: Desenvolva cada aspecto com citações
-4. **Conclusão**: Destaque implicações das diferenças encontradas
+---
 
-### REGRAS
-✓ Cite: `(Região | Caderno | Pág. X)` para cada afirmação
-✓ Se não houver dados para uma região, informe explicitamente
-✓ Não especule sobre diferenças não documentadas
-✓ Resposta completa (500-800 palavras)
+### FORMATO OBRIGATÓRIO
 
-### PERGUNTA
-{pergunta}
+Use ESTA estrutura de tabela:
+
+| Aspecto | Região Sul | Região Nordeste |
+|---------|------------|-----------------|
+| [Aspecto 1] | [Info Sul com citação] | [Info NE com citação] |
+| [Aspecto 2] | [Info Sul com citação] | [Info NE com citação] |
+| [Aspecto 3] | [Info Sul com citação] | [Info NE com citação] |
+| [Aspecto 4] | [Info Sul com citação] | [Info NE com citação] |
+| [Aspecto 5] | [Info Sul com citação] | [Info NE com citação] |
+
+---
+
+### REGRAS DA TABELA
+- Máximo 2 frases por célula
+- Citação em cada célula: (Região | Caderno | Pág. X)
+- Se não tiver info: "Não documentado"
+- Mínimo 5 aspectos
+
+---
+
+### APÓS A TABELA
+
+**📌 Similaridades:**
+- [Item com citação]
+
+**⚠️ Diferenças:**
+- [Item com citação]
+
+**🔍 Lacunas:**
+- [O que não está documentado]
+
+---
 
 ### RESPOSTA
 """,
 
         "lista": f"""
-### PAPEL
-Assistente técnico de PEM especializado em catalogação de informações.
-
 ### CONTEXTO DOCUMENTAL
 {contexto}
 
-### TAREFA
-Liste de forma COMPLETA todos os itens relevantes encontrados nos documentos.
-
-### ESTRUTURA
-- Cada item deve ter descrição detalhada (2-3 frases)
-- Inclua citação para cada item: `(Região | Caderno | Pág. X)`
-- Agrupe itens por categoria quando aplicável
-- Informe o total de itens encontrados
-
-### REGRAS
-✓ Não omita informações relevantes encontradas
-✓ Se encontrar poucos itens, informe que a documentação é limitada
-✓ Não adicione informações externas
+---
 
 ### PERGUNTA
 {pergunta}
 
-### RESPOSTA
-""",
+---
 
-        "explicacao": f"""
-### PAPEL
-Especialista em explicação técnica didática de PEM.
-
-### CONTEXTO DOCUMENTAL
-{contexto}
-
-### TAREFA
-Explique o conceito de forma COMPLETA e ACESSÍVEL.
-
-### ESTRUTURA
-1. **Definição**: Conceito principal (2-3 frases)
-2. **Contexto**: Como se aplica ao PEM
-3. **Detalhamento**: Aspectos importantes com exemplos dos documentos
-4. **Implicações**: Relevância prática
-
-### REGRAS
-✓ Use linguagem técnica mas acessível
-✓ Cite fontes para cada afirmação
-✓ Se o conceito não estiver completo nos documentos, avise
-✓ Resposta completa (400-600 palavras)
-
-### PERGUNTA
-{pergunta}
-
-### RESPOSTA
-""",
-
-        "analise": f"""
-### PAPEL
-Analista de impactos e consequências do Plano de Espaço Marinho.
-
-### CONTEXTO DOCUMENTAL
-{contexto}
-
-### TAREFA
-Analise de forma ABRANGENTE os impactos/consequências mencionados.
-
-### ESTRUTURA
-1. **Resumo Executivo**: Principais impactos identificados
-2. **Por Categoria**:
-   - 🌿 Ambiental
-   - 👥 Social
-   - 💰 Econômico
-   - ⚖️ Institucional
-3. **Inter-relações**: Como os impactos se conectam
-4. **Lacunas**: O que não está documentado
-
-### REGRAS
-✓ Cite fontes para cada afirmação
-✓ Distinga impactos diretos e indiretos quando possível
-✓ Não extrapole além do documentado
-✓ Resposta completa (500-800 palavras)
-
-### PERGUNTA
-{pergunta}
+### INSTRUÇÕES
+- Liste TODOS os itens encontrados
+- Cada item: descrição + citação (Região | Caderno | Pág. X)
+- Agrupe por categoria
+- Informe total de itens
 
 ### RESPOSTA
 """,
 
         "legislacao": f"""
-### PAPEL
-Especialista em marco legal do Plano de Espaço Marinho.
-
 ### CONTEXTO DOCUMENTAL
 {contexto}
 
-### TAREFA
-Explique as questões legislativas de forma DETALHADA.
-
-### ESTRUTURA
-1. **Marco Legal Principal**: Leis e normas citadas
-2. **Competências**: Quem regula o quê
-3. **Processos**: Fluxos de licenciamento, fiscalização, etc.
-4. **Desafios**: Lacunas ou conflitos mencionados
-5. **Por Região**: Diferenças entre Sul e Nordeste quando aplicável
-
-### REGRAS
-✓ Cite leis/normas específicas quando mencionadas
-✓ Inclua citação de página para cada informação
-✓ Se houver lacunas na documentação, informe
-✓ Resposta completa (500-800 palavras)
+---
 
 ### PERGUNTA
 {pergunta}
+
+---
+
+### INSTRUÇÕES
+1. Liste leis/normas específicas
+2. Cite página para cada informação
+3. Se não houver detalhes, informe
+4. NÃO invente números de leis
+
+### RESPOSTA
+""",
+
+        "analise": f"""
+### CONTEXTO DOCUMENTAL
+{contexto}
+
+---
+
+### PERGUNTA
+{pergunta}
+
+---
+
+### ESTRUTURA
+1. **Resumo**: Principais pontos (2-3 frases)
+2. **Impactos por Categoria**:
+   - 🌿 Ambiental
+   - 👥 Social
+   - 💰 Econômico
+3. **Citações**: (Região | Caderno | Pág. X) em cada afirmação
 
 ### RESPOSTA
 """
     }
     
-    return prompts.get(tipo_pergunta, prompts["padrao"])
+    return prompts.get(tipo, prompts["padrao"])
+
+# ============================================================================
+# 🎯 FORMATADOR DE TABELAS
+# ============================================================================
+def formatar_tabela_markdown(texto):
+    linhas = texto.split('\n')
+    resultado = []
+    i = 0
+    
+    while i < len(linhas):
+        linha = linhas[i].strip()
+        
+        if linha.startswith('|') and linha.count('|') >= 3:
+            tabela = []
+            while i < len(linhas) and (linhas[i].strip().startswith('|') or '---' in linhas[i]):
+                tabela_linha = linhas[i].strip()
+                partes = [p.strip() for p in tabela_linha.split('|') if p.strip()]
+                if len(partes) >= 2:
+                    tabela.append('| ' + ' | '.join(partes) + ' |')
+                else:
+                    tabela.append(tabela_linha)
+                i += 1
+            
+            if len(tabela) >= 2 and '---' not in tabela[1]:
+                cols = tabela[0].count('|') - 1
+                separador = '| ' + ' | '.join(['---'] * cols) + ' |'
+                tabela.insert(1, separador)
+            
+            resultado.extend(tabela)
+        else:
+            resultado.append(linha)
+            i += 1
+    
+    return '\n'.join(resultado)
 
 # ============================================================================
 # 📚 BARRA LATERAL
@@ -692,10 +700,10 @@ Explique as questões legislativas de forma DETALHADA.
 with st.sidebar:
     st.markdown("""
     <div style="text-align: center; padding: 20px 0; background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%); 
-                border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(12, 74, 110, 0.3);">
-        <div style="font-size: 4em; margin-bottom: 5px;">📚</div>
-        <h3 style="color: white; margin: 10px 0; font-weight: 700;">Biblioteca PEM</h3>
-        <p style="color: rgba(255,255,255,0.85); font-size: 0.85em; margin: 0;">Cadernos Setoriais Oficiais</p>
+                border-radius: 15px; margin-bottom: 20px;">
+        <div style="font-size: 4em;">📚</div>
+        <h3 style="color: white; margin: 10px 0;">Biblioteca PEM</h3>
+        <p style="color: rgba(255,255,255,0.85); font-size: 0.85em;">Cadernos Setoriais Oficiais</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -731,44 +739,31 @@ with st.sidebar:
         st.session_state.todas_as_paginas_lidas = []
     if "mensagens" not in st.session_state:
         st.session_state.mensagens = []
-    if "stats_tokens" not in st.session_state:
-        st.session_state.stats_tokens = {"total": 0, "ultima_resposta": 0}
     
     if st.session_state.cadernos_ativos:
-        st.markdown("""
-        <div class="loaded-notebooks">
-            <h4 style="color: #059669; margin-top: 0; margin-bottom: 12px; font-weight: 700;">
-                ✅ Cadernos Carregados
-            </h4>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="loaded-notebooks"><h4 style="color:#059669;margin:0 0 12px 0;">✅ Carregados</h4>', unsafe_allow_html=True)
         
         for regiao, nome, _ in st.session_state.cadernos_ativos:
-            if regiao == "SUL":
-                icon = "🗺️"
-                region_class = "region-sul"
-            else:
-                icon = "🌴"
-                region_class = "region-ne"
-            
+            icon = "🗺️" if regiao == "SUL" else "🌴"
+            region_class = "region-sul" if regiao == "SUL" else "region-ne"
             st.markdown(f"""
             <div class="loaded-notebook-item">
                 <span class="notebook-icon">{icon}</span>
                 <span class="notebook-region {region_class}">{regiao}</span>
-                <span style="color: #374151; flex: 1; font-weight: 500;">{nome}</span>
+                <span style="color:#374151;flex:1;">{nome}</span>
             </div>
             """, unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
         
-        total_paginas = len(st.session_state.todas_as_paginas_lidas)
         st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-value">{total_paginas}</div>
+            <div class="metric-value">{len(st.session_state.todas_as_paginas_lidas)}</div>
             <div class="metric-label">📄 Páginas Indexadas</div>
         </div>
         """, unsafe_allow_html=True)
     else:
-        st.info("👈 Selecione os cadernos acima para começar")
+        st.info("👈 Selecione cadernos para começar")
 
 # ============================================================================
 # 💾 CONTROLE DE ESTADO
@@ -789,13 +784,13 @@ if cadernos_selecionados_agora != st.session_state.cadernos_ativos:
                 paginas = ler_e_fatiar_pdf(file_id, nome, regiao)
                 st.session_state.todas_as_paginas_lidas.extend(paginas)
                 st.write(f"✓ {regiao} - {nome}: **{len(paginas)}** páginas")
-        st.sidebar.success(f"🎉 Pronto!")
+        st.sidebar.success("🎉 Pronto!")
         st.rerun()
 
 # ============================================================================
 # 📑 ABAS PRINCIPAIS
 # ============================================================================
-aba1, aba2 = st.tabs(["🔮 Oráculo (Chat)", "⚖️ Comparador Regional"])
+aba1, aba2 = st.tabs(["🔮 Chat", "⚖️ Comparador"])
 
 with aba1:
     st.markdown("""
@@ -803,161 +798,107 @@ with aba1:
                 box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px;">
         <h3 style="color: #0C4A6E; margin-top: 0;">💬 Como posso ajudar?</h3>
         <p style="color: #64748B; margin-bottom: 0;">
-            Faça perguntas sobre zoneamento, conservação, impactos ambientais, 
-            turismo, pesca, legislação e demais temas dos cadernos PEM.
+            Faça perguntas sobre zoneamento, conservação, impactos, turismo, pesca e legislação.
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    chat_box = st.container()
+    if "mensagens" not in st.session_state:
+        st.session_state.mensagens = []
     
-    with chat_box:
-        for m in st.session_state.mensagens:
-            with st.chat_message(m["role"], avatar="👤" if m["role"] == "user" else "🤖"):
-                st.markdown(m["content"])
+    for m in st.session_state.mensagens:
+        with st.chat_message(m["role"], avatar="👤" if m["role"]=="user" else "🤖"):
+            st.markdown(m["content"])
     
-    pergunta = st.chat_input("Ex: Quais os impactos no turismo costeiro?", key="chat_input")
+    pergunta = st.chat_input("Sua pergunta sobre os cadernos PEM...")
     
     if pergunta:
         if not st.session_state.cadernos_ativos:
-            st.error("⚠️ **Selecione ao menos um caderno na barra lateral!**")
+            st.error("⚠️ Selecione ao menos um caderno!")
         else:
             st.session_state.mensagens.append({"role": "user", "content": pergunta})
             
             with st.chat_message("assistant", avatar="🤖"):
-                with st.spinner("🔍 Buscando e analisando documentos..."):
-                    # 1. Busca páginas relevantes (limite aumentado)
-                    paginas_filtradas = buscar_paginas_relevantes(
-                        pergunta, 
-                        st.session_state.todas_as_paginas_lidas, 
-                        limite_paginas=10
-                    )
+                with st.spinner("🔍 Analisando documentos..."):
+                    pags = buscar_paginas_relevantes(pergunta, st.session_state.todas_as_paginas_lidas, 15)
+                    trechos = extrair_trechos_relevantes(pags, pergunta)
                     
-                    # 2. Extrai trechos com contexto preservado
-                    trechos = extrair_trechos_relevantes(paginas_filtradas, pergunta)
+                    contexto = ""
+                    for t in trechos:
+                        contexto += f"\n{t['cabecalho']}\n{t['texto']}\n"
                     
-                    # 3. Monta contexto
-                    contexto_enxuto = ""
-                    for trecho in trechos:
-                        contexto_enxuto += f"\n[{trecho['cabecalho']}]\n{trecho['texto']}\n"
+                    contexto, tokens = limitar_contexto(contexto, 6000)
+                    tipo = detectar_tipo_pergunta(pergunta)
+                    prompt = criar_prompt_final(pergunta, contexto, tipo)
                     
-                    # 4. Limita tokens (limite aumentado para qualidade)
-                    contexto_otimizado, tokens_contexto = limitar_contexto(contexto_enxuto, max_tokens=4500)
-                    
-                    # 5. Detecta tipo de pergunta
-                    tipo_pergunta = detectar_tipo_pergunta(pergunta)
-                    
-                    # 6. Cria prompt otimizado para qualidade
-                    prompt_final = criar_prompt_final(pergunta, contexto_otimizado, tipo_pergunta)
-                    
-                    # 7. Mostra fontes com indicador de qualidade
-                    with st.expander(f"📚 {len(trechos)} trechos consultados ({tokens_contexto} tokens)", expanded=False):
+                    with st.expander(f"📚 {len(trechos)} trechos ({tokens} tokens)"):
                         for t in trechos:
-                            st.markdown(f"**{t['cabecalho']}** | Relevância: {'🟢' if t['score'] >= 3 else '🟡' if t['score'] >= 2 else '🔵'} ({t['score']})")
-                        st.success(f"✅ Contexto otimizado: ~{int((1 - tokens_contexto/10000) * 100)} de economia vs. documento completo")
-                
-                # BLOCO TRY/EXCEPT CORRIGIDO (Alinhado com o 'with st.spinner')
-                try:
-                    # stream=True faz a resposta aparecer palavra por palavra
-                    res_stream = model.generate_content(prompt_final, stream=True)
+                            st.markdown(f"`{t['cabecalho']}` | Score: {t['score']}")
                     
-                    # Gerador seguro para ignorar partes vazias da resposta da API
-                    def stream_generator():
-                        for chunk in res_stream:
-                            if chunk.text:
-                                yield chunk.text
-                                
-                    # Mostra a resposta sendo digitada ao vivo no Streamlit
-                    resposta_completa = st.write_stream(stream_generator())
-                    
-                    # Salva a resposta completa no histórico para o chat não sumir
-                    st.session_state.mensagens.append({"role": "assistant", "content": resposta_completa})
-                
-                except Exception as e:
-                    st.error(f"⚠️ Erro durante a geração: {e}")
+                    try:
+                        res = model.generate_content(prompt)
+                        resposta = formatar_tabela_markdown(res.text)
+                        st.markdown(resposta)
+                        st.session_state.mensagens.append({"role": "assistant", "content": resposta})
+                    except Exception as e:
+                        st.error(f"⚠️ Erro: {e}")
 
 with aba2:
     if len(st.session_state.cadernos_ativos) < 2:
         st.markdown("""
         <div style="background: #FFFBEB; border-radius: 15px; padding: 35px; 
-                    border: 2px solid #FCD34D; text-align: center; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);">
+                    border: 2px solid #FCD34D; text-align: center;">
             <div style="font-size: 3.5em; margin-bottom: 15px;">💡</div>
-            <h3 style="color: #92400E; margin-top: 0; font-size: 1.5em;">Comparação Regional</h3>
-            <p style="color: #78350F; margin-bottom: 25px; font-size: 1.05em;">
-                Selecione <strong>um caderno do Sul e um do Nordeste</strong> na barra lateral 
-                para habilitar a comparação entre as regiões.
+            <h3 style="color: #92400E; margin-top: 0;">Comparação Regional</h3>
+            <p style="color: #78350F; margin-bottom: 25px;">
+                Selecione <strong>um caderno do Sul e um do Nordeste</strong> na barra lateral.
             </p>
         </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown("""
         <div style="background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%); 
-                    border-radius: 15px; padding: 25px; color: white; margin-bottom: 20px;
-                    box-shadow: 0 6px 20px rgba(12, 74, 110, 0.35);">
-            <h3 style="margin-top: 0; font-size: 1.4em;">⚖️ Comparação Estratégica Regional</h3>
-            <p style="margin-bottom: 0; opacity: 0.92;">
-                Analise diferenças e similaridades nas diretrizes entre as regiões Sul e Nordeste.
-            </p>
+                    border-radius: 15px; padding: 25px; color: white; margin-bottom: 20px;">
+            <h3 style="margin-top: 0;">⚖️ Comparação Estratégica Regional</h3>
+            <p style="margin-bottom: 0; opacity: 0.92;">Sul vs Nordeste</p>
         </div>
         """, unsafe_allow_html=True)
         
+        tema_comparacao = st.text_input(
+            "🎯 Tema da comparação:",
+            placeholder="Ex: zoneamento, licenciamento, conservação...",
+            value="diretrizes zoneamento conservação"
+        )
+        
         if st.button("🚀 Executar Comparação", type="primary", use_container_width=True):
-            with st.spinner("📊 Analisando diretrizes em ambos os cadernos..."):
-                paginas_comp = buscar_paginas_relevantes(
-                    "diretrizes conflitos zoneamento conservação impacto", 
-                    st.session_state.todas_as_paginas_lidas, 
-                    limite_paginas=15
-                )
+            with st.spinner("📊 Analisando..."):
+                pags = buscar_paginas_relevantes(tema_comparacao, st.session_state.todas_as_paginas_lidas, 25)
+                trechos = extrair_trechos_relevantes(pags, tema_comparacao)
                 
-                trechos_comp = extrair_trechos_relevantes(paginas_comp, "diretrizes zoneamento conservação impacto")
+                contexto = ""
+                for t in trechos:
+                    contexto += f"\n{t['cabecalho']}\n{t['texto']}\n"
                 
-                contexto_comp = ""
-                for t in trechos_comp:
-                    contexto_comp += f"\n[{t['cabecalho']}]\n{t['texto']}\n"
+                contexto, tokens = limitar_contexto(contexto, 10000)
+                prompt = criar_prompt_final(tema_comparacao, contexto, "comparacao")
                 
-                contexto_comp, tokens_comp = limitar_contexto(contexto_comp, max_tokens=5500)
-                
-                prompt_comp = f"""
-### PAPEL
-Analista técnico sênior de Plano de Espaço Marinho (PEM).
-
-### CONTEXTO
-{contexto_comp}
-
-### TAREFA
-Compare de forma DETALHADA e TÉCNICA as abordagens das regiões Sul e Nordeste.
-
-### ESTRUTURA OBRIGATÓRIA
-1. **Resumo Executivo** (3-4 frases)
-2. **Tabela Comparativa** com aspectos principais
-3. **Análise por Dimensão**:
-   - Zoneamento e Uso
-   - Licenciamento
-   - Fiscalização
-   - Conflitos
-   - Conservação
-4. **Similaridades Estratégicas**
-5. **Diferenças Relevantes**
-6. **Recomendações** (se aplicável)
-
-### REGRAS
-✓ Cite: `(Região | Caderno | Pág. X)` para cada afirmação
-✓ Use tabelas Markdown para comparações
-✓ Se não houver dados para uma região, informe explicitamente
-✓ Resposta completa e fundamentada (700-1000 palavras)
-
-### RESPOSTA
-"""
+                with st.expander(f"📚 {len(trechos)} fontes ({tokens} tokens)"):
+                    for t in trechos:
+                        st.markdown(f"`{t['cabecalho']}` | Score: {t['score']}")
                 
                 try:
-                    res_comp = model.generate_content(prompt_comp)
-                    st.markdown(res_comp.text)
+                    res = model.generate_content(prompt)
+                    resposta = formatar_tabela_markdown(res.text)
+                    st.markdown(resposta)
                     
-                    with st.expander(f"📚 {len(trechos_comp)} fontes da comparação"):
-                        for t in trechos_comp:
-                            st.markdown(f"- {t['cabecalho']} (score: {t['score']})")
+                    st.download_button(
+                        label="📋 Baixar Comparação",
+                        data=resposta,
+                        file_name=f"comparacao_{tema_comparacao.replace(' ', '_')}.md",
+                        mime="text/markdown"
+                    )
                 except Exception as e:
-                    st.error("⚠️ Erro na comparação.")
+                    st.error(f"⚠️ Erro: {e}")
 
 # ============================================================================
 # 🌊 FOOTER
@@ -966,15 +907,7 @@ st.markdown("<div class='wave-divider'></div>", unsafe_allow_html=True)
 
 st.markdown("""
 <div style="text-align: center; padding: 30px; color: #64748B; font-size: 0.9em;">
-    <p>🌊 <strong>Assistente PEM</strong> | Busca Inteligente em Cadernos Setoriais</p>
-    <p style="opacity: 0.7; margin-top: 12px;">
-        <a href="https://www.marinha.mil.br/secirm/psrm/pem" target="_blank" 
-           style="color: #0EA5E9; text-decoration: none; font-weight: 600;">
-            📌 Fonte Oficial: Marinha do Brasil - SECIRM
-        </a>
-    </p>
-    <p style="opacity: 0.5; font-size: 0.8em; margin-top: 18px;">
-        ⚠️ As informações devem ser validadas nos documentos oficiais
-    </p>
+    <p>🌊 <strong>Assistente PEM</strong> | Marinha do Brasil - SECIRM</p>
+    <p style="opacity: 0.5; font-size: 0.8em;">⚠️ Valide informações nos documentos oficiais</p>
 </div>
 """, unsafe_allow_html=True)
