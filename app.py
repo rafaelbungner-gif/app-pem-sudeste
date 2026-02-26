@@ -841,12 +841,17 @@ with aba1:
                             st.markdown(f"**{t['cabecalho']}** | Relevância: {'🟢' if t['score'] >= 3 else '🟡' if t['score'] >= 2 else '🔵'} ({t['score']})")
                         st.success(f"✅ Contexto otimizado: ~{int((1 - tokens_contexto/10000) * 100)} de economia vs. documento completo")
                     
-                    try:
-                        res = model.generate_content(prompt_final)
-                        st.markdown(res.text)
-                        st.session_state.mensagens.append({"role": "assistant", "content": res.text})
+                  try:
+                        # stream=True faz a resposta aparecer palavra por palavra
+                        res_stream = model.generate_content(prompt_final, stream=True)
+                        
+                        # Mostra a resposta sendo digitada ao vivo no Streamlit
+                        resposta_completa = st.write_stream(chunk.text for chunk in res_stream)
+                        
+                        # Salva a resposta completa no histórico para o chat não sumir
+                        st.session_state.mensagens.append({"role": "assistant", "content": resposta_completa})
                     except Exception as e:
-                        st.error(f"⚠️ Erro: {e}")
+                        st.error(f"⚠️ Erro durante a geração: {e}")
 
 with aba2:
     if len(st.session_state.cadernos_ativos) < 2:
