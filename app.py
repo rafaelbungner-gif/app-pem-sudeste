@@ -311,26 +311,41 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================================
-# 🔧 CONFIGURAÇÃO DA IA - ATUALIZADA PARA GEMINI 1.5
+# 🔧 CONFIGURAÇÃO DA IA (COM BUSCA AUTOMÁTICA DO MELHOR MODELO)
 # ============================================================================
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     
-    # Forçar o uso do Gemini 1.5 Pro (ou 'gemini-1.5-flash' se quiser mais rapidez)
-    # O 1.5 tem até 2 milhões de tokens de contexto, ele engole PDFs inteiros rindo.
-    modelo_nome = 'gemini-1.5-pro'
+    # 1. Busca todos os modelos disponíveis na sua chave
+    modelos_disponiveis = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
     
-    # Usar System Instructions reduz drasticamente a alucinação
-    instrucao_sistema = "Você é um assistente técnico sênior especializado no Plano de Espaço Marinho (PEM) do Brasil. Sua regra de ouro é: baseie-se estrita e APENAS nos documentos fornecidos. Nunca invente dados, nomes ou leis. Se a resposta não estiver nos trechos, declare a lacuna. Cite sempre a Região, Caderno e Página."
-    
+    # 2. Escolhe o melhor modelo disponível automaticamente
+    if 'models/gemini-1.5-pro-latest' in modelos_disponiveis:
+        modelo_nome = 'models/gemini-1.5-pro-latest'
+    elif 'models/gemini-1.5-flash-latest' in modelos_disponiveis:
+        modelo_nome = 'models/gemini-1.5-flash-latest'
+    elif 'models/gemini-1.0-pro' in modelos_disponiveis:
+        modelo_nome = 'models/gemini-1.0-pro'
+    elif 'models/gemini-pro' in modelos_disponiveis:
+        modelo_nome = 'models/gemini-pro'
+    else:
+        modelo_nome = modelos_disponiveis[0] # Pega o primeiro que funcionar como último recurso
+        
+    st.sidebar.caption(f"🤖 Modelo ativo: `{modelo_nome.replace('models/', '')}`")
+
+    instrucao_sistema = """Você é um analista técnico de alto rigor metodológico especializado no Plano de Espaço Marinho (PEM) do Brasil. 
+    Regra de Ouro: Baseie sua resposta ESTRITAMENTE nos trechos fornecidos. Não invente ou presuma informações.
+    Se a resposta não estiver nos trechos, declare claramente: 'Não encontrei essa informação nos cadernos selecionados'.
+    Citação Obrigatória: Ao final de cada afirmação técnica, cite (Região | Caderno | Página X)."""
+
     model = genai.GenerativeModel(
         model_name=modelo_nome,
         system_instruction=instrucao_sistema,
         generation_config=genai.GenerationConfig(
-            temperature=0.1,       # 0.1 é ideal para RAG técnico rigoroso. Mais precisão, menos criatividade.
-            top_p=0.95,            
-            top_k=40,              
-            max_output_tokens=100000 
+            temperature=0.1,       # Extrema precisão
+            top_p=0.95,
+            top_k=40,
+            max_output_tokens=8192 # Evita que a resposta seja cortada
         )
     )
 except Exception as e:
