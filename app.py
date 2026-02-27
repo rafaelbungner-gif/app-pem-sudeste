@@ -155,6 +155,19 @@ tr:last-child td { border-bottom:none; }
     box-shadow:0 4px 20px rgba(0,0,0,.07); margin-bottom:20px; border-top:4px solid #0EA5E9;
 }
 
+/* Scrollable chat window — messages inside, input fixo fora */
+[data-testid="stVerticalBlockBorderWrapper"] > div[style*="height"] {
+    border-radius: 16px !important;
+    background: transparent !important;
+}
+.chat-empty-state {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    height:100%; min-height:300px; color:#94A3B8; text-align:center; padding:40px;
+}
+.chat-empty-state .icon { font-size:3.5em; margin-bottom:16px; opacity:.5; }
+.chat-empty-state h4 { color:#64748B; font-size:1.1em; font-weight:600; margin:0 0 8px; }
+.chat-empty-state p  { font-size:.9em; margin:0; line-height:1.7; max-width:380px; }
+
 /* ── EXTRATOR CARDS ──────────────────────────────────────── */
 .ext-card {
     background:white; border-radius:14px; padding:18px 22px; margin:10px 0;
@@ -406,155 +419,181 @@ def exibir_score_html(score):
 # 📋 EXTRATOR INTELIGENTE — Legislação · Próximos Passos · Institucional
 # ============================================================================
 
+# ── Palavras-domínio obrigatórias ────────────────────────────────────────
+# A sentença PRECISA conter ao menos uma para ser aceita.
+# Evita falsos positivos como "normas de professores", "índice de capítulo", etc.
+PALAVRAS_DOMINIO = re.compile(
+    r"\b("
+    r"mar(ítim[ao]s?)?|ocean[ao]|costeiro|litoral|aquático|marinho"
+    r"|pesca|pesqueir[ao]|pescador|aquicultur"
+    r"|ambiental|ambiente|ecossistema|biodiversidade|conservação"
+    r"|licença|licenciamento|autorização\s+ambiental|eia|rima"
+    r"|petróleo|gás\s+natural|offshore|plataforma\s+continental"
+    r"|porto|portuário|navegação|embarcação|náutico"
+    r"|energia\s+(?:eólica|solar|renovável|offshore)"
+    r"|espaço\s+marinho|PEM|PSRM|SECIRM|marinha\s+do\s+brasil"
+    r"|zona\s+(?:costeira|econômica|exclusiva)|ZEE|ZEP|ZPA|ZUM|ZPI"
+    r"|recurso\s+(?:mineral|pesqueiro|marinho|natural)"
+    r"|clima|mudança\s+climática|carbono"
+    r"|turismo\s+(?:náutico|costeiro|marítimo)"
+    r"|mineração|geologia|subsolo\s+marinho"
+    r"|defesa\s+nacional|soberania|segurança\s+(?:marítima|nacional)"
+    r"|ibama|icmbio|secirm|cirm|antaq|seap|anp"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# ── Filtro negativo: descarta sentenças de sumário, legenda ou cabeçalho ─
+PADRAO_EXCLUSAO = re.compile(
+    r"^(\s*\d{1,3}[\s\.\)]+[A-Z])"  # começa com "1. Texto" ou "12) Texto"
+    r"|\.{4,}"                        # reticências (sumário)
+    r"|\bfigura\s+\d+\b"              # "Figura 3 —"
+    r"|\btabela\s+\d+\b"
+    r"|\bquadro\s+\d+\b"
+    r"|\bfonte:\s"
+    r"|\belaboração\s+própria\b"
+    r"|\bpág(ina)?\.?\s*\d+\b"        # "Pág. 45"
+    r"|\bop\.\s*cit\b"                # citações bibliográficas
+    r"|\bet\s+al\b"
+    r"|\bapud\b",
+    re.IGNORECASE,
+)
+
+MIN_CHARS   = 80   # descarta fragmentos muito curtos
+MAX_CHARS   = 600
+MIN_PALAVRAS = 12  # descarta rótulos de 2-3 palavras
+
 # ── Padrões por categoria ─────────────────────────────────────────────────
 PADROES_EXTRATOR = {
 
     "Legislação": {
-        "cor": "#0EA5E9",
+        "cor":   "#0EA5E9",
         "icone": "⚖️",
         "badge": "badge-legislacao",
-        "card": "ext-legislacao",
+        "card":  "ext-legislacao",
+        # Apenas referências explícitas a normas com número OU expressões
+        # jurídicas altamente específicas no contexto marítimo/ambiental
         "padroes": [
-            # Referências explícitas a instrumentos normativos
-            r"\blei\s+n[oº°]?\s*[\d\.]+",
-            r"\bdecreto\s+n[oº°]?\s*[\d\.]+",
-            r"\bresolução\s+n[oº°]?\s*[\d\.]+",
-            r"\bportaria\s+n[oº°]?\s*[\d\.]+",
-            r"\binstrução\s+normativa",
-            r"\bnormativa\s+n[oº°]?\s*[\d\.]+",
-            r"\bconvenção\b",
-            r"\btratado\b",
-            r"\bcódigo\s+(?:civil|penal|ambiental|florestal|de\s+\w+)",
-            r"\bestatuto\b",
-            r"\bregulamento\b",
-            r"\bmarco\s+legal",
-            r"\blegislação\s+(?:vigente|aplicável|federal|estadual|brasileira)",
-            r"\bnorma\s+(?:técnica|regulamentadora|vigente)",
-            r"\blicença\s+(?:ambiental|de\s+operação|prévia|de\s+instalação)",
-            r"\blicenciamento\s+ambiental",
-            r"\bpermissão\b",
-            r"\bautorização\s+(?:legal|regulatória|ambiental)",
-            r"\bcumprimento\s+(?:da\s+lei|das\s+normas|da\s+legislação)",
-            r"\bnos\s+termos\s+da\s+(?:lei|legislação|normativa)",
-            r"\bconforme\s+(?:a\s+lei|a\s+legislação|a\s+normativa|o\s+decreto)",
-            r"\bamparo\s+legal",
-            r"\bbase\s+legal",
-            r"\bindispensável\s+(?:o\s+licenciamento|a\s+autorização)",
+            r"\blei\s+(?:federal\s+)?n[oº°\.]\s*[\d\.]+",           # Lei nº 9.433
+            r"\blei\s+complementar\s+n[oº°\.]\s*[\d\.]+",
+            r"\bdecreto(?:-lei)?\s+n[oº°\.]\s*[\d\.]+",             # Decreto nº 8.756
+            r"\bresolução\s+(?:conama|anvisa|aneel|anp|antaq|cirm|consema|adnf)?\s*n[oº°\.]\s*[\d\.]+",
+            r"\bportaria\s+(?:mma|mm|minfra|mme|mdic|seap|interministerial)?\s*n[oº°\.]\s*[\d\.]+",
+            r"\binstrução\s+normativa\s+(?:n[oº°\.]\s*[\d\.]+|\w+\s+n[oº°\.]\s*[\d\.]+)",
+            r"\bnota\s+técnica\s+n[oº°\.]\s*[\d\.]+",
+            r"\bcódigo\s+(?:ambiental|florestal|de\s+águas|de\s+mineração)",
+            r"\bconvenção\s+(?:unclos|marpol|ospar|ramsar|sobre\s+(?:o\s+)?(?:mar|biodiversidade|clima|direito\s+do\s+mar))",
+            r"\btratado\s+internacional\b",
+            r"\bprotocolo\s+de\s+(?:kyoto|nagoya|cartagena|montreal)\b",
+            r"\bmarco\s+legal\b",
+            r"\bbase\s+legal\b",
+            r"\bamparo\s+legal\b",
+            r"\bnos\s+termos\s+(?:da\s+lei|do\s+decreto|da\s+resolução|da\s+legislação)\b",
+            r"\bconforme\s+(?:a\s+lei|o\s+decreto|a\s+resolução|a\s+legislação\s+vigente)\b",
+            r"\blicenciamento\s+ambiental\b",
+            r"\blicença\s+(?:ambiental|prévia|de\s+instalação|de\s+operação)\b",
+            r"\bestudo\s+de\s+impacto\s+ambiental\b",
+            r"\beia[-/\s]rima\b",
+            r"\bzoneamento\s+(?:ecológico|ambiental|marinho|econômico)\b",
         ],
     },
 
     "Próximos Passos": {
-        "cor": "#10B981",
+        "cor":   "#10B981",
         "icone": "🚀",
         "badge": "badge-passos",
-        "card": "ext-passos",
+        "card":  "ext-passos",
+        # Ações futuras com verbo de ação explícito — padrões reflexivos
+        # e construções passivas são mais precisos que verbos soltos
         "padroes": [
-            # Ações planejadas, futuras, recomendadas como continuidade
-            r"\bpróxim[ao]s?\s+(?:etapa|passo|fase|ação|medida|atividade)",
-            r"\betapa\s+(?:seguinte|posterior|futura|subsequente)",
-            r"\bação\s+(?:prevista|planejada|futura|recomendada)",
-            r"\bações\s+(?:previstas|planejadas|futuras|recomendadas)",
+            r"\bpróxim[ao]s?\s+(?:etapa|passo|fase|ação|medida|atividade|ano)\b",
+            r"\betapa\s+(?:seguinte|posterior|futura|subsequente)\b",
+            r"\bações?\s+(?:prevista[s]?|planejada[s]?|futura[s]?|prioritária[s]?|necessária[s]?)\b",
             r"\bpropõe-se\b",
-            r"\bproposto\b",
-            r"\bproposta[s]?\b",
             r"\bprevê-se\b",
-            r"\bprevisto\b",
-            r"\bprevê\b",
-            r"\bserá\s+(?:realizado|desenvolvido|implementado|elaborado|criado|estabelecido)",
-            r"\bserão\s+(?:realizados|desenvolvidos|implementados|elaborados|criados|estabelecidos)",
             r"\bpretende-se\b",
             r"\bplaneja-se\b",
-            r"\bé\s+necessário\s+(?:elaborar|desenvolver|criar|implementar|realizar|avançar)",
-            r"\bimplantação\s+(?:de|do|da)\b",
-            r"\bimplementação\s+(?:de|do|da)\b",
-            r"\bdesenvolvimento\s+(?:de|do|da)\b",
-            r"\bcriação\s+(?:de|do|da)\b",
-            r"\binstituir\b",
-            r"\bestabelecer\b",
-            r"\bfomentar\b",
-            r"\bfortalecer\b",
-            r"\baprimorar\b",
-            r"\bprioridade\b",
-            r"\bmeta\s+(?:de|do|da|para)\b",
-            r"\bcronograma\b",
-            r"\bprazo\s+(?:de|para|previsto)\b",
-            r"\bmonitoramento\s+(?:contínuo|periódico|futuro)",
-            r"\bacompanhamento\s+(?:contínuo|periódico|futuro)",
-            r"\bdemanda\s+(?:futura|estudos|investigação|ação)",
+            r"\bindica-se\b",
+            r"\bsugere-se\b",
             r"\brecomenda-se\b",
             r"\bé\s+recomendado\b",
             r"\bé\s+desejável\b",
-            r"\bdeveria\b",
+            r"\bserá\s+(?:realizado|desenvolvido|implementado|elaborado|criado|executado|contratado|avaliado)\b",
+            r"\bserão\s+(?:realizados|desenvolvidos|implementados|elaborados|criados|executados)\b",
+            r"\bé\s+necessário\s+(?:elaborar|desenvolver|criar|implementar|realizar|avançar|estruturar|monitorar)\b",
+            r"\bimplantação\s+(?:de|do|da)\s+\w",
+            r"\bimplementação\s+(?:de|do|da)\s+\w",
+            r"\bcronograma\s+(?:de|para)\b",
+            r"\bprazo\s+(?:de|para|máximo|previsto|estabelecido)\b",
+            r"\bmeta\s+(?:de|para)\s+\w",
+            r"\bmonitoramento\s+(?:contínuo|periódico|futuro|sistemático)\b",
+            r"\bacompanhamento\s+(?:contínuo|periódico|sistemático)\b",
         ],
     },
 
     "Institucional": {
-        "cor": "#F59E0B",
+        "cor":   "#F59E0B",
         "icone": "🏛️",
         "badge": "badge-institucional",
-        "card": "ext-institucional",
+        "card":  "ext-institucional",
+        # Apenas competências explícitas, arranjos de governança e órgãos nomeados
         "padroes": [
-            # Órgãos, competências, governança, responsabilidades
-            r"\bcabe\s+(?:à|ao|aos|às)\b",
-            r"\bcompete\s+(?:à|ao|aos|às)\b",
-            r"\bé\s+responsabilidade\b",
-            r"\bresponsável\s+(?:pela|pelo|pelos|pelas)\b",
-            r"\bcoordenação\s+(?:de|do|da|entre)\b",
-            r"\bgestão\s+(?:compartilhada|integrada|participativa|de)\b",
-            r"\bgovernança\b",
-            r"\barticula(?:ção|r)\s+(?:inter|entre|com)\b",
-            r"\bintegração\s+(?:entre|de|institucional)\b",
-            r"\binterlocução\b",
-            r"\bórgão\s+(?:responsável|gestor|federal|estadual|competente|regulador)",
-            r"\bórgãos\s+(?:responsáveis|gestores|federais|estaduais|competentes)",
-            r"\bministério\b",
-            r"\bsecretaria\b",
-            r"\bagência\s+(?:nacional|estadual|reguladora)\b",
-            r"\bcomitê\b",
-            r"\bcomissão\b",
-            r"\bconselho\b",
-            r"\bfórum\b",
+            r"\bcabe\s+(?:à|ao|aos|às)\s+\w",
+            r"\bcompete\s+(?:à|ao|aos|às)\s+\w",
+            r"\bé\s+(?:de\s+)?responsabilidade\s+(?:da|do|dos|das)\s+\w",
+            r"\bresponsável\s+(?:pela|pelo|pelos|pelas)\s+\w",
+            r"\bórgão\s+(?:responsável|gestor|federal|estadual|competente|regulador|ambiental)\b",
+            r"\bórgãos\s+(?:responsáveis|gestores|federais|estaduais|competentes)\b",
+            r"\bgestão\s+(?:compartilhada|integrada|participativa)\b",
+            r"\bgovernança\s+(?:marinha|oceânica|costeira|ambiental|integrada)\b",
+            r"\barticula(?:ção|r)\s+interinstitucional\b",
+            r"\bintegração\s+(?:interinstitucional|entre\s+órgãos|de\s+políticas)\b",
             r"\bgrupo\s+de\s+trabalho\b",
             r"\bcâmara\s+técnica\b",
             r"\binstância\s+(?:competente|decisória|gestora|federal|estadual)\b",
-            r"\bórgão\s+ambiental\b",
-            r"\bfiscalização\b",
-            r"\bmonitoramento\s+(?:institucional|governamental)\b",
-            r"\binteração\s+(?:institucional|entre\s+órgãos)\b",
-            r"\bprotocolo\s+(?:de\s+cooperação|de\s+intenção|entre)\b",
-            r"\bconvênio\b",
-            r"\bparceria\s+(?:institucional|interinstitucional)\b",
+            r"\bfiscalização\s+(?:ambiental|pesqueira|marítima|federal)\b",
+            r"\bprotocolo\s+de\s+(?:cooperação|intenção|integração)\b",
+            r"\bconvênio\s+(?:entre|com|de)\s+\w",
+            r"\bparceria\s+(?:institucional|interinstitucional|público[-\s]privada)\b",
             r"\bpoder\s+público\b",
-            r"\badministração\s+pública\b",
             r"\bunião\s+federal\b",
-            r"\bestados\s+(?:e\s+municípios|costeiros|federativos)\b",
-            r"\bmunícipios?\b",
             r"\bmarinha\s+do\s+brasil\b",
             r"\bsecirm\b",
+            r"\bcirm\b",
             r"\bibama\b",
             r"\bicmbio\b",
-            r"\bana\b",
-            r"\baneel\b",
-            r"\bant\b",
             r"\bantaq\b",
+            r"\bseap\b",
+            r"\banp\b",
         ],
     },
 }
 
-MIN_CHARS = 55
-MAX_CHARS = 650
 
 def extrair_sentencas(texto):
+    """Quebra o texto em sentenças e aplica filtros de qualidade."""
     sentencas = re.split(r"(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÃÕÂÊÎÔÛ])", texto)
     resultado = []
     for s in sentencas:
         s = s.strip()
-        if MIN_CHARS <= len(s) <= MAX_CHARS:
-            resultado.append(s)
+        if not (MIN_CHARS <= len(s) <= MAX_CHARS):
+            continue
+        if PADRAO_EXCLUSAO.search(s):
+            continue
+        if len(s.split()) < MIN_PALAVRAS:
+            continue
+        resultado.append(s)
     return resultado
 
+
 def classificar_sentenca_extrator(sentenca):
-    """Retorna lista de categorias que se aplicam (pode ser mais de uma)."""
+    """
+    Retorna lista de categorias aplicáveis.
+    Exige que a sentença contenha ao menos uma palavra-domínio marítimo/ambiental,
+    eliminando falsos positivos genéricos.
+    """
+    if not PALAVRAS_DOMINIO.search(sentenca):
+        return []
     s_lower = sentenca.lower()
     categorias = []
     for categoria, cfg in PADROES_EXTRATOR.items():
@@ -564,29 +603,25 @@ def classificar_sentenca_extrator(sentenca):
                 break
     return categorias
 
-def executar_extracao(todas_as_paginas):
-    """Extrai e retorna lista de dicts com todas as informações relevantes."""
-    resultados = []
-    vistos = set()  # evita duplicatas exatas
 
+def executar_extracao(todas_as_paginas):
+    resultados = []
+    vistos = set()
     for pag in todas_as_paginas:
         for sentenca in extrair_sentencas(pag["texto_original"]):
-            chave = (pag["caderno"], sentenca[:80])
+            chave = (pag["caderno"], sentenca[:100])
             if chave in vistos:
                 continue
             vistos.add(chave)
-
-            categorias = classificar_sentenca_extrator(sentenca)
-            for cat in categorias:
+            for cat in classificar_sentenca_extrator(sentenca):
                 resultados.append({
                     "Categoria": cat,
-                    "Conteúdo": sentenca.strip(),
-                    "Região": pag["regiao"],
-                    "Caderno": pag["caderno"],
-                    "Página": pag["pagina"],
-                    "Fonte": pag["cabecalho"],
+                    "Conteúdo":  sentenca.strip(),
+                    "Região":    pag["regiao"],
+                    "Caderno":   pag["caderno"],
+                    "Página":    pag["pagina"],
+                    "Fonte":     pag["cabecalho"],
                 })
-
     return resultados
 
 
@@ -686,21 +721,25 @@ aba1, aba2 = st.tabs(["🔮 Chat Analítico", "📋 Extrator de Informações"])
 # ABA 1 — CHAT ROLÁVEL COM INPUT FIXO
 # ─────────────────────────────────────────────────────────────
 with aba1:
-    st.markdown("""
-    <div class="chat-intro">
-        <h3 style="color:#0C4A6E;margin-top:0;">💬 Faça sua pergunta</h3>
-        <p style="color:#64748B;margin:0;">
-            Perguntas sobre zoneamento, conservação, impactos, legislação, pesca, energia e mais.
-            Respostas fundamentadas e rastreáveis até a página de origem.
-        </p>
-    </div>""", unsafe_allow_html=True)
 
-    # Exibe histórico de mensagens — rola naturalmente
-    for m in st.session_state.mensagens:
-        with st.chat_message(m["role"], avatar="👤" if m["role"] == "user" else "🤖"):
-            st.markdown(m["content"])
+    # ── Janela de mensagens rolável ────────────────────────────
+    chat_box = st.container(height=600, border=False)
+    with chat_box:
+        if not st.session_state.mensagens:
+            st.markdown("""
+            <div class="chat-empty-state">
+                <div class="icon">🌊</div>
+                <h4>Assistente PEM pronto para ajudar</h4>
+                <p>Faça perguntas sobre zoneamento, conservação, impactos ambientais,
+                legislação marítima, pesca, energia e mais.<br>
+                As respostas são fundamentadas e rastreáveis até a página de origem.</p>
+            </div>""", unsafe_allow_html=True)
+        else:
+            for m in st.session_state.mensagens:
+                with st.chat_message(m["role"], avatar="👤" if m["role"] == "user" else "🤖"):
+                    st.markdown(m["content"])
 
-    # Input fixo no fundo (comportamento nativo do st.chat_input)
+    # ── Input fixo no fundo ────────────────────────────────────
     pergunta = st.chat_input("Digite sua pergunta sobre os cadernos PEM…")
 
     if pergunta:
@@ -709,42 +748,47 @@ with aba1:
         else:
             st.session_state.mensagens.append({"role": "user", "content": pergunta})
 
-            with st.chat_message("assistant", avatar="🤖"):
-                with st.spinner("🔍 Buscando e analisando documentos…"):
+            # Re-renderiza o container com a nova mensagem + spinner
+            with chat_box:
+                with st.chat_message("user", avatar="👤"):
+                    st.markdown(pergunta)
 
-                    resultados = buscar_paginas_relevantes(
-                        pergunta, st.session_state.todas_as_paginas_lidas, limite=20
-                    )
-                    trechos = extrair_trechos_para_chat(resultados, pergunta)
-                    contexto = "\n\n".join(
-                        f"{t['cabecalho']}\n{t['texto']}" for t in trechos
-                    )
-                    contexto, tokens_est = limitar_contexto(contexto, max_chars=40000)
+                with st.chat_message("assistant", avatar="🤖"):
+                    with st.spinner("🔍 Buscando e analisando documentos…"):
 
-                    with st.expander(
-                        f"📚 {len(trechos)} trechos consultados | ~{tokens_est} tokens estimados",
-                        expanded=False,
-                    ):
-                        for t in trechos:
-                            st.markdown(
-                                f"`{t['cabecalho']}` {exibir_score_html(t['score'])}",
-                                unsafe_allow_html=True,
-                            )
+                        resultados = buscar_paginas_relevantes(
+                            pergunta, st.session_state.todas_as_paginas_lidas, limite=20
+                        )
+                        trechos = extrair_trechos_para_chat(resultados, pergunta)
+                        contexto = "\n\n".join(
+                            f"{t['cabecalho']}\n{t['texto']}" for t in trechos
+                        )
+                        contexto, tokens_est = limitar_contexto(contexto, max_chars=40000)
 
-                    if not trechos:
-                        aviso = "⚠️ Nenhum trecho relevante encontrado. Tente reformular ou carregar outros cadernos."
-                        st.warning(aviso)
-                        st.session_state.mensagens.append({"role": "assistant", "content": aviso})
-                    else:
-                        tipo = detectar_tipo_pergunta(pergunta)
-                        prompt = criar_prompt_final(pergunta, contexto, tipo)
-                        try:
-                            res = model.generate_content(prompt)
-                            resposta = formatar_tabela_markdown(res.text)
-                            st.markdown(resposta)
-                            st.session_state.mensagens.append({"role": "assistant", "content": resposta})
-                        except Exception as e:
-                            st.error(f"⚠️ Erro na geração: {e}")
+                        with st.expander(
+                            f"📚 {len(trechos)} trechos | ~{tokens_est} tokens",
+                            expanded=False,
+                        ):
+                            for t in trechos:
+                                st.markdown(
+                                    f"`{t['cabecalho']}` {exibir_score_html(t['score'])}",
+                                    unsafe_allow_html=True,
+                                )
+
+                        if not trechos:
+                            aviso = "⚠️ Nenhum trecho relevante encontrado. Tente reformular ou carregar outros cadernos."
+                            st.warning(aviso)
+                            st.session_state.mensagens.append({"role": "assistant", "content": aviso})
+                        else:
+                            tipo = detectar_tipo_pergunta(pergunta)
+                            prompt = criar_prompt_final(pergunta, contexto, tipo)
+                            try:
+                                res = model.generate_content(prompt)
+                                resposta = formatar_tabela_markdown(res.text)
+                                st.markdown(resposta)
+                                st.session_state.mensagens.append({"role": "assistant", "content": resposta})
+                            except Exception as e:
+                                st.error(f"⚠️ Erro na geração: {e}")
 
 
 # ─────────────────────────────────────────────────────────────
