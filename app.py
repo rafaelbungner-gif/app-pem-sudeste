@@ -51,812 +51,653 @@ st.set_page_config(
 )
 
 # ============================================================================
-# 💅 ESTILOS CSS PERSONALIZADOS
+# 💅 ESTILOS CSS
 # ============================================================================
 st.markdown("""
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+
     .stApp {
-        background: linear-gradient(180deg, #F0F9FF 0%, #E0F2FE 100%);
+        background: linear-gradient(160deg, #EFF6FF 0%, #DBEAFE 50%, #E0F2FE 100%);
     }
-    
+
     .main-header {
-        background-image: 
-            linear-gradient(135deg, rgba(12, 74, 110, 0.85) 0%, rgba(3, 105, 161, 0.80) 50%, rgba(14, 165, 233, 0.85) 100%),
+        background-image:
+            linear-gradient(135deg, rgba(7, 55, 99, 0.92) 0%, rgba(3, 105, 161, 0.88) 50%, rgba(6, 148, 162, 0.90) 100%),
             url('https://images.unsplash.com/photo-1590523741831-ab7f85327541?w=1600&h=600&fit=crop&q=80');
         background-size: cover;
         background-position: center;
-        background-repeat: no-repeat;
-        padding: 55px 40px;
-        border-radius: 20px;
+        padding: 60px 40px 50px;
+        border-radius: 24px;
         color: white;
         text-align: center;
-        margin-bottom: 30px;
-        box-shadow: 0 15px 50px rgba(14, 165, 233, 0.35);
+        margin-bottom: 28px;
+        box-shadow: 0 20px 60px rgba(3, 105, 161, 0.4), inset 0 1px 0 rgba(255,255,255,0.15);
         position: relative;
         overflow: hidden;
     }
-    
-    .main-header::before {
+    .main-header::after {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.12) 0%, transparent 60%);
-        pointer-events: none;
-        z-index: 0;
+        bottom: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #38BDF8, #06B6D4, #0EA5E9, #38BDF8);
+        background-size: 200% 100%;
+        animation: shimmer 3s linear infinite;
     }
-    
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
     .main-header h1 {
-        font-size: 3.5em;
-        font-weight: 800;
-        margin: 0;
-        text-shadow: 3px 3px 8px rgba(0,0,0,0.5);
-        position: relative;
-        z-index: 1;
-        letter-spacing: -1px;
+        font-size: 3.2em; font-weight: 800; margin: 0;
+        text-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        letter-spacing: -1.5px;
     }
-    
     .main-header p {
-        font-size: 1.35em;
-        margin-top: 12px;
-        opacity: 0.98;
-        position: relative;
-        z-index: 1;
-        font-weight: 400;
-        text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+        font-size: 1.2em; margin-top: 10px; opacity: 0.95;
+        font-weight: 400; text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        letter-spacing: 0.3px;
     }
-    
     .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 7px 18px;
-        border-radius: 25px;
-        font-size: 0.85em;
-        font-weight: 600;
-        margin: 6px;
-        background: rgba(255,255,255,0.18);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255,255,255,0.25);
-        transition: all 0.3s ease;
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 7px 18px; border-radius: 30px; font-size: 0.82em;
+        font-weight: 600; margin: 6px;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255,255,255,0.3);
+        transition: all 0.25s ease;
     }
-    
-    .status-badge:hover {
-        background: rgba(255,255,255,0.28);
-        transform: translateY(-2px);
+    .status-badge:hover { background: rgba(255,255,255,0.25); transform: translateY(-2px); }
+
+    /* SIDEBAR */
+    .sidebar-header {
+        background: linear-gradient(135deg, #073763 0%, #0369A1 100%);
+        border-radius: 16px; padding: 22px;
+        margin-bottom: 18px; text-align: center;
+        box-shadow: 0 6px 20px rgba(7,55,99,0.3);
     }
-    
     .sidebar-section {
         background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%);
-        border-radius: 15px;
-        padding: 20px;
-        margin: 12px 0;
-        border: 1px solid rgba(255,255,255,0.15);
-        box-shadow: 0 4px 15px rgba(12, 74, 110, 0.25);
+        border-radius: 14px; padding: 18px; margin: 10px 0;
+        border: 1px solid rgba(255,255,255,0.12);
+        box-shadow: 0 4px 15px rgba(12,74,110,0.25);
     }
-    
-    .sidebar-section h4 {
-        color: white;
-        margin-bottom: 12px;
-        font-size: 1em;
-        font-weight: 600;
-    }
-    
-    .loaded-notebooks {
-        background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
-        border-radius: 12px;
-        padding: 18px;
-        margin: 15px 0;
-        border: 1px solid #86EFAC;
-        box-shadow: 0 3px 12px rgba(16, 185, 129, 0.15);
-    }
-    
-    .loaded-notebook-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 0;
-        border-bottom: 1px solid #BBF7D0;
-        font-size: 0.9em;
-    }
-    
-    .loaded-notebook-item:last-child {
-        border-bottom: none;
-    }
-    
-    .notebook-icon {
-        font-size: 1.4em;
-    }
-    
-    .notebook-region {
-        font-weight: 700;
-        padding: 3px 10px;
-        border-radius: 8px;
-        font-size: 0.75em;
-        text-transform: uppercase;
-    }
-    
-    .region-sul {
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-        color: white;
-    }
-    
-    .region-ne {
-        background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-        color: white;
-    }
-    
+    .sidebar-section h4 { color: white; margin-bottom: 10px; font-size: 0.95em; font-weight: 600; }
+
     .source-link {
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        display: flex; align-items: center; gap: 10px;
         background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
-        border-radius: 12px;
-        padding: 14px 16px;
-        margin: 8px 0;
-        text-decoration: none;
-        color: #0C4A6E;
-        font-weight: 600;
-        font-size: 0.88em;
+        border-radius: 12px; padding: 13px 16px; margin: 7px 0;
+        text-decoration: none; color: #0C4A6E;
+        font-weight: 600; font-size: 0.87em;
         border: 1px solid #E2E8F0;
         transition: all 0.3s ease;
         box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
-    
     .source-link:hover {
         background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
-        color: white;
-        border-color: #0284C7;
+        color: white; border-color: #0284C7;
         transform: translateX(5px);
-        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.35);
+        box-shadow: 0 4px 15px rgba(14,165,233,0.35);
     }
-    
-    .source-link-icon {
-        font-size: 1.3em;
+
+    .loaded-notebooks {
+        background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+        border-radius: 14px; padding: 18px; margin: 14px 0;
+        border: 1px solid #86EFAC;
+        box-shadow: 0 3px 12px rgba(16,185,129,0.12);
     }
-    
+    .loaded-notebook-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 0; border-bottom: 1px solid #BBF7D0; font-size: 0.88em;
+    }
+    .loaded-notebook-item:last-child { border-bottom: none; }
+    .notebook-region {
+        font-weight: 700; padding: 3px 10px; border-radius: 8px;
+        font-size: 0.72em; text-transform: uppercase;
+    }
+    .region-sul { background: linear-gradient(135deg, #10B981, #059669); color: white; }
+    .region-ne  { background: linear-gradient(135deg, #F59E0B, #D97706); color: white; }
+
     .metric-card {
         background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%);
-        border-radius: 15px;
-        padding: 22px;
-        text-align: center;
-        color: white;
-        box-shadow: 0 6px 20px rgba(12, 74, 110, 0.35);
-        margin: 15px 0;
+        border-radius: 16px; padding: 22px; text-align: center; color: white;
+        box-shadow: 0 6px 20px rgba(12,74,110,0.35); margin: 14px 0;
     }
-    
-    .metric-value {
-        font-size: 2.8em;
-        font-weight: 800;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    .metric-label {
-        font-size: 0.92em;
-        opacity: 0.92;
-        margin-top: 6px;
-    }
-    
-    .sidebar-divider {
-        border-top: 2px dashed rgba(255,255,255,0.25);
-        margin: 20px 0;
-    }
-    
-    .wave-divider {
-        height: 60px;
-        background: url('image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%230EA5E9" fill-opacity="0.15" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
-        background-size: cover;
-        margin: 30px 0;
-    }
-    
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-    }
-    
+    .metric-value { font-size: 2.8em; font-weight: 800; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+    .metric-label { font-size: 0.9em; opacity: 0.9; margin-top: 6px; }
+
+    .sidebar-divider { border-top: 2px dashed rgba(255,255,255,0.2); margin: 18px 0; }
+
+    /* TABS */
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
     .stTabs [data-baseweb="tab"] {
-        border-radius: 10px;
-        padding: 10px 20px;
-        font-weight: 600;
+        border-radius: 12px; padding: 10px 24px;
+        font-weight: 600; font-size: 0.95em;
     }
-    
+
+    /* BUTTONS */
     .stButton > button {
         background: linear-gradient(135deg, #0369A1 0%, #0EA5E9 100%);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        padding: 12px 30px;
-        font-weight: 600;
-        font-size: 1em;
+        color: white; border: none; border-radius: 12px;
+        padding: 12px 32px; font-weight: 600; font-size: 1em;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+        box-shadow: 0 4px 15px rgba(14,165,233,0.4);
     }
-    
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6);
+        box-shadow: 0 8px 25px rgba(14,165,233,0.55);
     }
-    
-    /* Tabelas Markdown - VISUAL APRIMORADO */
+
+    /* TABLES */
     table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 25px 0;
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        width: 100%; border-collapse: collapse; margin: 22px 0;
+        background: white; border-radius: 14px; overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
-    
     th {
-        background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%);
-        color: white;
-        padding: 16px 20px;
-        text-align: left;
-        font-weight: 700;
-        font-size: 0.95em;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        background: linear-gradient(135deg, #073763 0%, #0369A1 100%);
+        color: white; padding: 15px 20px; text-align: left;
+        font-weight: 700; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px;
     }
-    
     td {
-        padding: 16px 20px;
-        border-bottom: 1px solid #E2E8F0;
-        color: #374151;
-        line-height: 1.7;
-        font-size: 0.93em;
-        vertical-align: top;
+        padding: 14px 20px; border-bottom: 1px solid #E2E8F0;
+        color: #374151; line-height: 1.7; font-size: 0.92em; vertical-align: top;
     }
-    
-    tr:hover {
-        background: linear-gradient(90deg, #F8FAFC 0%, #FFFFFF 100%);
-    }
-    
-    tr:last-child td {
-        border-bottom: none;
-    }
-    
-    /* Score badges - VISUAL MELHORADO */
+    tr:hover { background: #F8FAFF; }
+    tr:last-child td { border-bottom: none; }
+
+    /* SCORE BADGES */
     .score-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8em;
-        font-weight: 700;
-        margin: 3px;
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 3px 11px; border-radius: 20px;
+        font-size: 0.78em; font-weight: 700; margin: 2px;
     }
-    
-    .score-high {
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-        color: white;
-        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    .score-high { background: linear-gradient(135deg, #10B981, #059669); color: white; }
+    .score-medium { background: linear-gradient(135deg, #F59E0B, #D97706); color: white; }
+    .score-low { background: linear-gradient(135deg, #6366F1, #4F46E5); color: white; }
+
+    /* ÍNDICE RESULTS */
+    .index-result {
+        background: white; border-radius: 14px; padding: 18px 22px;
+        margin: 10px 0; border-left: 5px solid #0EA5E9;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+        transition: all 0.25s ease;
     }
-    
-    .score-medium {
-        background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-        color: white;
-        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    .index-result:hover {
+        box-shadow: 0 6px 20px rgba(14,165,233,0.2);
+        transform: translateX(3px);
     }
-    
-    .score-low {
-        background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
-        color: white;
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    .index-header {
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 10px;
     }
-    
-    /* Citações */
-    .citation {
-        display: inline-block;
-        background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
-        color: #0369A1;
-        padding: 3px 10px;
-        border-radius: 8px;
-        font-size: 0.78em;
-        font-weight: 600;
-        margin-left: 6px;
-        border: 1px solid #7DD3FC;
+    .index-location {
+        font-family: monospace; font-size: 0.82em; font-weight: 700;
+        background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+        color: #1E40AF; padding: 4px 12px; border-radius: 8px;
+        border: 1px solid #BFDBFE;
     }
-    
-    /* Response sections */
-    .response-section {
-        background: white;
-        border-radius: 12px;
-        padding: 22px;
-        margin: 18px 0;
-        border-left: 5px solid #0EA5E9;
-        box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+    .index-snippet {
+        color: #4B5563; font-size: 0.9em; line-height: 1.7;
+        border-top: 1px solid #F1F5F9; padding-top: 10px; margin-top: 4px;
     }
+    .index-snippet mark {
+        background: linear-gradient(135deg, #FEF9C3, #FDE68A);
+        color: #92400E; border-radius: 4px; padding: 1px 4px; font-weight: 600;
+    }
+    .index-summary {
+        background: linear-gradient(135deg, #073763 0%, #0369A1 100%);
+        border-radius: 16px; padding: 22px 28px; margin-bottom: 22px; color: white;
+    }
+    .no-results {
+        background: #FFF7ED; border-radius: 14px; padding: 30px;
+        border: 2px solid #FED7AA; text-align: center;
+    }
+
+    /* CHAT */
+    .chat-welcome {
+        background: white; border-radius: 16px; padding: 25px 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.07); margin-bottom: 22px;
+        border-top: 4px solid #0EA5E9;
+    }
+
+    /* FOOTER */
+    .footer {
+        text-align: center; padding: 28px; color: #64748B;
+        font-size: 0.88em; margin-top: 20px;
+        border-top: 2px dashed #CBD5E1;
+    }
+
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================================
-# 🌊 HEADER PRINCIPAL
+# 🌊 HEADER
 # ============================================================================
 st.markdown("""
 <div class="main-header">
     <h1>🌊 Assistente PEM</h1>
-    <p>Busca Inteligente e Rastreável</p>
-    <div style="margin-top: 22px;">
-        <span class="status-badge">✓ IA Ativa</span>
-        <span class="status-badge">✓ PDF Indexado</span>
-        <span class="status-badge">✓ Multi-Região</span>
+    <p>Busca Inteligente · Rastreável · Fundamentada</p>
+    <div style="margin-top: 20px;">
+        <span class="status-badge">✦ IA Ativa</span>
+        <span class="status-badge">✦ PDF Indexado</span>
+        <span class="status-badge">✦ Multi-Região</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ============================================================================
-# 🔧 CONFIGURAÇÃO DA IA
+# 🔧 CONFIGURAÇÃO DA IA — anti-alucinação máxima
 # ============================================================================
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    
-    modelos_disponiveis = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-    
-    if 'models/gemini-1.5-pro-latest' in modelos_disponiveis:
-        modelo_nome = 'models/gemini-1.5-pro-latest'
-    elif 'models/gemini-1.5-flash-latest' in modelos_disponiveis:
-        modelo_nome = 'models/gemini-1.5-flash-latest'
-    elif 'models/gemini-1.0-pro' in modelos_disponiveis:
-        modelo_nome = 'models/gemini-1.0-pro'
+
+    modelos_disponiveis = [
+        m.name for m in genai.list_models()
+        if 'generateContent' in m.supported_generation_methods
+    ]
+
+    for candidato in [
+        'models/gemini-1.5-pro-latest',
+        'models/gemini-1.5-flash-latest',
+        'models/gemini-1.0-pro'
+    ]:
+        if candidato in modelos_disponiveis:
+            modelo_nome = candidato
+            break
     else:
         modelo_nome = modelos_disponiveis[0] if modelos_disponiveis else 'models/gemini-pro'
-    
-    st.sidebar.caption(f"🤖 Modelo: `{modelo_nome.replace('models/', '')}`")
 
-    instrucao_sistema = """Você é um analista técnico especializado no Plano de Espaço Marinho (PEM) do Brasil.
-    
-SUAS RESPOSTAS DEVEM SER:
-1. COMPLETAS e BEM FUNDAMENTADAS
-2. Baseadas ESTRITAMENTE nos trechos fornecidos
-3. Com citações OBRIGATÓRIAS: (Região | Caderno | Pág. X)
-4. Estruturadas com tópicos, subtópicos e tabelas quando apropriado
-5. Se não encontrar informação, declare claramente
+    st.sidebar.caption(f"🤖 `{modelo_nome.replace('models/', '')}`")
 
-NÃO limite suas respostas - seja abrangente e detalhado."""
+    # INSTRUÇÃO DE SISTEMA — anti-alucinação máxima
+    instrucao_sistema = """Você é um analista técnico do Plano de Espaço Marinho (PEM) do Brasil.
+
+REGRAS ABSOLUTAS — NUNCA VIOLE:
+1. Use EXCLUSIVAMENTE as informações dos trechos fornecidos. Nada mais.
+2. Se a informação não estiver nos trechos, diga: "Não encontrado nos documentos consultados."
+3. NUNCA invente dados, números, leis, nomes ou datas.
+4. Cite a fonte de CADA afirmação: (Região | Caderno | Pág. X)
+5. Prefira dizer menos com precisão a dizer mais com incerteza.
+6. Seja direto, técnico e fundamentado. Sem introduções genéricas."""
 
     model = genai.GenerativeModel(
         model_name=modelo_nome,
         system_instruction=instrucao_sistema,
         generation_config=genai.GenerationConfig(
-            temperature=0.25,
-            top_p=0.9,
-            top_k=50,
-            max_output_tokens=8192
+            temperature=0.05,   # Quase zero → alucinação mínima
+            top_p=0.85,
+            top_k=20,
+            max_output_tokens=4096
         )
     )
 except Exception as e:
     st.error(f"⚠️ Erro de conexão com o Google AI: {e}")
 
+
 # ============================================================================
-# 📄 FUNÇÃO DE LEITURA DE PDF
+# 📄 LEITURA DE PDF
 # ============================================================================
 def ler_e_fatiar_pdf(file_id, nome_doc, regiao):
-    paginas_fatiadas = []
+    paginas = []
     try:
         url = f'https://drive.google.com/uc?id={file_id}'
-        response = requests.get(url)
-        f = io.BytesIO(response.content)
-        reader = PdfReader(f)
-        
+        response = requests.get(url, timeout=30)
+        reader = PdfReader(io.BytesIO(response.content))
         for i, page in enumerate(reader.pages):
-            texto_pagina = page.extract_text()
-            if texto_pagina:
-                cabecalho = f"[{regiao} | {nome_doc} | Pág. {i+1}]"
-                paginas_fatiadas.append({
-                    "cabecalho": cabecalho,
-                    "texto": texto_pagina.lower(),
-                    "texto_original": texto_pagina
+            texto = page.extract_text()
+            if texto and texto.strip():
+                paginas.append({
+                    "cabecalho": f"[{regiao} | {nome_doc} | Pág. {i+1}]",
+                    "texto": texto.lower(),
+                    "texto_original": texto,
+                    "pagina": i + 1,
+                    "regiao": regiao,
+                    "caderno": nome_doc
                 })
-        return paginas_fatiadas
     except Exception as ex:
         st.error(f"Erro ao ler PDF: {ex}")
+    return paginas
+
+
+# ============================================================================
+# 🔍 BUSCA POR PALAVRAS-CHAVE
+# ============================================================================
+PALAVRAS_IGNORADAS = {
+    'o','a','os','as','de','do','da','dos','das','em','no','na','nos','nas',
+    'para','com','que','quais','qual','como','sobre','mais','este','esta',
+    'isso','aqui','pelo','pela','pelos','pelas','entre','também','quando',
+    'onde','muito','suas','seus','seu','sua','são','está','have','from',
+    'este','essa','esses','essas','um','uma','uns','umas','por','sendo'
+}
+
+def extrair_palavras_chave(texto):
+    tokens = re.findall(r'\b[a-záéíóúãõâêîôûàèìòùç]{4,}\b', texto.lower())
+    return [t for t in tokens if t not in PALAVRAS_IGNORADAS]
+
+
+def pontuar_pagina(pagina, palavras_chave):
+    score = 0
+    texto = pagina["texto"]
+    for palavra in palavras_chave:
+        ocorrencias = len(re.findall(rf'\b{re.escape(palavra)}\b', texto))
+        score += ocorrencias
+    return score
+
+
+def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite=20):
+    palavras = extrair_palavras_chave(pergunta)
+    if not palavras:
         return []
 
-# ============================================================================
-# 🔍 BUSCADOR INTELIGENTE
-# ============================================================================
-def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite_paginas=20):
-    paginas_estruturais = []
+    resultados = []
     for pag in todas_as_paginas:
-        match = re.search(r'Pág.:\s*(\d+)', pag['cabecalho'])
-        if match and int(match.group(1)) <= 6:
-            paginas_estruturais.append(pag)
+        score = pontuar_pagina(pag, palavras)
+        if score > 0:
+            resultados.append((score, pag))
 
-    palavras_pergunta = re.findall(r'\w+', pergunta.lower())
-    palavras_ignoradas = {'o', 'a', 'os', 'as', 'de', 'do', 'da', 'em', 'no', 'na', 
-                          'para', 'com', 'que', 'quais', 'qual', 'como', 'sobre'}
-    palavras_chave = [p for p in palavras_pergunta if p not in palavras_ignoradas and len(p) > 3]
-    
-    melhores_paginas = []
-    if palavras_chave:
-        resultados = []
-        for pag in todas_as_paginas:
-            pontuacao = sum(1 for palavra in palavras_chave if palavra in pag["texto"])
-            if pontuacao > 0:
-                resultados.append((pontuacao, pag))
-        
-        resultados.sort(key=lambda x: x[0], reverse=True)
-        melhores_paginas = [item[1] for item in resultados[:limite_paginas]]
-    
-    paginas_finais = paginas_estruturais.copy()
-    for pag in melhores_paginas:
-        if pag not in paginas_finais:
-            paginas_finais.append(pag)
-            
-    return paginas_finais
+    resultados.sort(key=lambda x: x[0], reverse=True)
+    return resultados[:limite]
+
 
 # ============================================================================
-# 🎯 EXTRATOR DE TRECHOS RELEVANTES
+# 🗂️ ÍNDICE — busca por páginas (SEM IA, zero alucinação)
 # ============================================================================
-def extrair_trechos_relevantes(paginas_filtradas, pergunta, max_caracteres=800):
-    palavras_chave = set(re.findall(r'\w{4,}', pergunta.lower()))
+def buscar_indice(tema, todas_as_paginas, min_score=1, max_resultados=50):
+    """Retorna páginas que mencionam o tema, com trechos relevantes."""
+    palavras = extrair_palavras_chave(tema)
+    if not palavras:
+        return []
+
+    resultados = []
+    for pag in todas_as_paginas:
+        score = pontuar_pagina(pag, palavras)
+        if score >= min_score:
+            # Extrai trecho ao redor das palavras encontradas
+            trecho = extrair_trecho_contexto(pag["texto_original"], palavras)
+            resultados.append({
+                "score": score,
+                "cabecalho": pag["cabecalho"],
+                "pagina": pag["pagina"],
+                "regiao": pag["regiao"],
+                "caderno": pag["caderno"],
+                "trecho": trecho
+            })
+
+    resultados.sort(key=lambda x: x["score"], reverse=True)
+    return resultados[:max_resultados]
+
+
+def extrair_trecho_contexto(texto_original, palavras, janela=200):
+    """Encontra a primeira ocorrência de uma palavra-chave e retorna o contexto."""
+    texto_lower = texto_original.lower()
+    melhor_pos = -1
+    for palavra in palavras:
+        match = re.search(rf'\b{re.escape(palavra)}\b', texto_lower)
+        if match:
+            melhor_pos = match.start()
+            break
+
+    if melhor_pos == -1:
+        return texto_original[:300].strip()
+
+    inicio = max(0, melhor_pos - janela // 2)
+    fim = min(len(texto_original), melhor_pos + janela)
+
+    # Ajusta para não cortar no meio de uma palavra
+    if inicio > 0:
+        inicio = texto_original.rfind(' ', 0, inicio) + 1
+    trecho = texto_original[inicio:fim].strip()
+    if inicio > 0:
+        trecho = '...' + trecho
+    if fim < len(texto_original):
+        trecho += '...'
+    return trecho
+
+
+def destacar_palavras(trecho, palavras):
+    """Envolve palavras-chave em <mark> para destaque."""
+    for palavra in palavras:
+        trecho = re.sub(
+            rf'(?i)\b({re.escape(palavra)})\b',
+            r'<mark>\1</mark>',
+            trecho
+        )
+    return trecho
+
+
+# ============================================================================
+# 🎯 EXTRATOR DE TRECHOS PARA O CHAT
+# ============================================================================
+def extrair_trechos_para_chat(resultados_buscados, pergunta, max_chars=700):
+    palavras = set(extrair_palavras_chave(pergunta))
     trechos = []
-    
-    for pag in paginas_filtradas:
+
+    for score, pag in resultados_buscados:
         paragrafos = pag['texto_original'].split('\n\n')
-        
-        for i, paragrafo in enumerate(paragrafos):
-            paragrafo_limpo = paragrafo.strip()
-            if len(paragrafo_limpo) < 50:
+        melhor_score = 0
+        melhor_paragrafo = ""
+
+        for paragrafo in paragrafos:
+            if len(paragrafo.strip()) < 60:
                 continue
-            
-            score = sum(1 for palavra in palavras_chave if palavra.lower() in paragrafo_limpo.lower())
-            
-            if score >= 1:
-                contexto_completo = []
-                if i > 0 and len(paragrafos[i-1].strip()) > 40:
-                    contexto_completo.append(paragrafos[i-1].strip())
-                contexto_completo.append(paragrafo_limpo)
-                if i < len(paragrafos) - 1 and len(paragrafos[i+1].strip()) > 40:
-                    contexto_completo.append(paragrafos[i+1].strip())
-                
-                texto_final = '\n\n'.join(contexto_completo)[:max_caracteres]
-                
-                trechos.append({
-                    'cabecalho': pag['cabecalho'],
-                    'texto': texto_final,
-                    'score': score
-                })
-    
-    trechos.sort(key=lambda x: x['score'], reverse=True)
-    return trechos[:30]
+            p_lower = paragrafo.lower()
+            p_score = sum(1 for w in palavras if w in p_lower)
+            if p_score > melhor_score:
+                melhor_score = p_score
+                melhor_paragrafo = paragrafo.strip()
+
+        if melhor_paragrafo:
+            trechos.append({
+                'cabecalho': pag['cabecalho'],
+                'texto': melhor_paragrafo[:max_chars],
+                'score': score
+            })
+
+    return trechos[:25]
+
 
 # ============================================================================
 # 📏 CONTROLE DE TOKENS
 # ============================================================================
-def contar_tokens(texto):
-    return len(texto) // 4
+def limitar_contexto(contexto, max_tokens=8000):
+    estimativa = len(contexto) // 4
+    if estimativa <= max_tokens:
+        return contexto, estimativa
 
-def limitar_contexto(contexto, max_tokens=10000):
-    tokens_atuais = contar_tokens(contexto)
-    if tokens_atuais <= max_tokens:
-        return contexto, tokens_atuais
-    
-    linhas = contexto.split('\n')
-    contexto_reduzido = []
-    tokens_usados = 0
-    
-    for linha in linhas:
-        tokens_linha = contar_tokens(linha)
-        if tokens_usados + tokens_linha <= max_tokens:
-            contexto_reduzido.append(linha)
-            tokens_usados += tokens_linha
-    
-    return '\n'.join(contexto_reduzido), tokens_usados
+    limite_chars = max_tokens * 4
+    return contexto[:limite_chars], max_tokens
+
 
 # ============================================================================
 # 🎯 DETECTOR DE TIPO DE PERGUNTA
 # ============================================================================
 def detectar_tipo_pergunta(pergunta):
     p = pergunta.lower()
-    if any(w in p for w in ['compare', 'diferença', 'diferenças', 'entre', 'vs', 'versus']):
+    if any(w in p for w in ['compare', 'diferença', 'entre', 'vs', 'versus', 'contraste']):
         return "comparacao"
-    elif any(w in p for w in ['liste', 'listar', 'quais', 'cite', 'mencione']):
-        return "lista"
-    elif any(w in p for w in ['legislação', 'lei', 'norma', 'regulamento', 'marco legal']):
+    if any(w in p for w in ['legislação', 'lei', 'norma', 'regulamento', 'marco legal', 'decreto']):
         return "legislacao"
-    elif any(w in p for w in ['impacto', 'consequência', 'efeito', 'resultado']):
+    if any(w in p for w in ['impacto', 'consequência', 'efeito', 'resultado', 'afeta']):
         return "analise"
+    if any(w in p for w in ['liste', 'listar', 'quais', 'cite', 'mencione', 'enumere']):
+        return "lista"
     return "padrao"
 
+
 # ============================================================================
-# 🎯 PROMPTS COMPLETOS (ESTRUTURA ORIGINAL RESTAURADA)
+# 🎯 PROMPTS — compactos e anti-alucinação
 # ============================================================================
 def criar_prompt_final(pergunta, contexto, tipo="padrao"):
-    
+    base_regras = """
+REGRAS OBRIGATÓRIAS:
+- Use APENAS as informações dos trechos acima.
+- Cite cada afirmação: (Região | Caderno | Pág. X).
+- Se não houver informação suficiente, declare: "Não encontrado nos documentos consultados."
+- NUNCA invente dados, leis, números ou nomes."""
+
     prompts = {
-        "padrao": f"""
-### PAPEL
-Você é um assistente técnico especializado em Plano de Espaço Marinho (PEM) do Brasil.
-Sua função é fornecer respostas COMPLETAS e BEM FUNDAMENTADAS baseadas nos documentos.
-
-### CONTEXTO DOCUMENTAL
+        "padrao": f"""TRECHOS DOCUMENTAIS:
 {contexto}
 
-### DIRETRIZES DE RESPOSTA
-1. **Completeza**: Desenvolva a resposta de forma abrangente, explorando TODOS os aspectos relevantes encontrados nos documentos
-2. **Precisão**: Use APENAS informações presentes no contexto acima
-3. **Citações**: Formato obrigatório → `(Região | Caderno | Pág. X)` após cada afirmação importante
-4. **Estrutura**: 
-   - Comece com uma visão geral contextualizada
-   - Desenvolva com tópicos e subtópicos detalhados
-   - Use bullet points e numeração para organizar
-   - Inclua exemplos específicos dos documentos
-5. **Transparência**: Se alguma informação não estiver nos documentos, declare claramente
-6. **Extensão**: Resposta completa e detalhada (sem limite rígido de palavras)
+{base_regras}
 
-### PERGUNTA
-{pergunta}
+PERGUNTA: {pergunta}
 
-### RESPOSTA
-""",
+RESPOSTA (organize com tópicos e subtópicos quando útil):""",
 
-        "comparacao": f"""
-### PAPEL
-Analista técnico comparativo de Plano de Espaço Marinho (PEM).
-
-### CONTEXTO DOCUMENTAL
+        "comparacao": f"""TRECHOS DOCUMENTAIS:
 {contexto}
 
-### TAREFA
-Compare de forma DETALHADA e TÉCNICA as abordagens regionais encontradas nos documentos.
+{base_regras}
 
-### ESTRUTURA DA RESPOSTA
-1. **Resumo Executivo**: Síntese das principais similaridades e diferenças (3-4 frases)
-2. **Tabela Comparativa**: Use tabela Markdown com aspectos relevantes
-3. **Análise por Tópico**: Desenvolva CADA aspecto com citações e detalhes
-4. **Similaridades Estratégicas**: Liste e explique
-5. **Diferenças Relevantes**: Liste e explique
-6. **Conclusão**: Implicações das diferenças encontradas
+PERGUNTA: {pergunta}
 
-### REGRAS
-✓ Cite: `(Região | Caderno | Pág. X)` para cada afirmação
-✓ Se não houver dados para uma região, informe explicitamente
-✓ Não especule sobre diferenças não documentadas
-✓ Resposta completa e fundamentada (sem limite rígido)
+RESPOSTA — use esta estrutura:
+1. Pontos em comum (com citações)
+2. Diferenças encontradas (com citações)
+3. Tabela comparativa Markdown (se houver dados suficientes)
+4. O que NÃO foi encontrado nos documentos""",
 
-### PERGUNTA
-{pergunta}
-
-### RESPOSTA
-""",
-
-        "lista": f"""
-### PAPEL
-Assistente técnico de PEM especializado em catalogação de informações.
-
-### CONTEXTO DOCUMENTAL
+        "lista": f"""TRECHOS DOCUMENTAIS:
 {contexto}
 
-### TAREFA
-Liste de forma COMPLETA todos os itens relevantes encontrados nos documentos.
+{base_regras}
 
-### ESTRUTURA
-- Cada item deve ter descrição DETALHADA (2-4 frases)
-- Inclua citação para cada item: `(Região | Caderno | Pág. X)`
-- Agrupe itens por categoria quando aplicável
-- Informe o total de itens encontrados
-- Adicione contexto e exemplos quando disponível
+PERGUNTA: {pergunta}
 
-### REGRAS
-✓ Não omita informações relevantes encontradas
-✓ Se encontrar poucos itens, informe que a documentação é limitada
-✓ Não adicione informações externas
+RESPOSTA — liste cada item com:
+- Descrição objetiva (1-2 frases)
+- Citação: (Região | Caderno | Pág. X)
+Informe o total ao final.""",
 
-### PERGUNTA
-{pergunta}
-
-### RESPOSTA
-""",
-
-        "explicacao": f"""
-### PAPEL
-Especialista em explicação técnica didática de PEM.
-
-### CONTEXTO DOCUMENTAL
+        "analise": f"""TRECHOS DOCUMENTAIS:
 {contexto}
 
-### TAREFA
-Explique o conceito de forma COMPLETA, ACESSÍVEL e DETALHADA.
+{base_regras}
 
-### ESTRUTURA
-1. **Definição**: Conceito principal com contexto
-2. **Contexto PEM**: Como se aplica ao Plano de Espaço Marinho
-3. **Detalhamento**: Aspectos importantes com exemplos dos documentos
-4. **Aplicações Práticas**: Como é implementado
-5. **Implicações**: Relevância prática e impactos
+PERGUNTA: {pergunta}
 
-### REGRAS
-✓ Use linguagem técnica mas acessível
-✓ Cite fontes para cada afirmação
-✓ Se o conceito não estiver completo nos documentos, avise
-✓ Resposta completa e bem desenvolvida
+RESPOSTA — analise por dimensão quando cabível:
+🌿 Ambiental | 👥 Social | 💰 Econômico | ⚖️ Institucional
+Cite cada ponto. Informe lacunas documentais ao final.""",
 
-### PERGUNTA
-{pergunta}
-
-### RESPOSTA
-""",
-
-        "analise": f"""
-### PAPEL
-Analista de impactos e consequências do Plano de Espaço Marinho.
-
-### CONTEXTO DOCUMENTAL
+        "legislacao": f"""TRECHOS DOCUMENTAIS:
 {contexto}
 
-### TAREFA
-Analise de forma ABRANGENTE e PROFUNDA os impactos/consequências mencionados.
+{base_regras}
 
-### ESTRUTURA
-1. **Resumo Executivo**: Principais impactos identificados
-2. **Por Categoria**:
-   - 🌿 Ambiental (detalhado)
-   - 👥 Social (detalhado)
-   - 💰 Econômico (detalhado)
-   - ⚖️ Institucional (detalhado)
-3. **Inter-relações**: Como os impactos se conectam
-4. **Exemplos Específicos**: Casos mencionados nos documentos
-5. **Lacunas**: O que não está documentado
+PERGUNTA: {pergunta}
 
-### REGRAS
-✓ Cite fontes para cada afirmação
-✓ Distinga impactos diretos e indiretos quando possível
-✓ Não extrapole além do documentado
-✓ Resposta completa e fundamentada
-
-### PERGUNTA
-{pergunta}
-
-### RESPOSTA
-""",
-
-        "legislacao": f"""
-### PAPEL
-Especialista em marco legal do Plano de Espaço Marinho.
-
-### CONTEXTO DOCUMENTAL
-{contexto}
-
-### TAREFA
-Explique as questões legislativas de forma DETALHADA e TÉCNICA.
-
-### ESTRUTURA
-1. **Marco Legal Principal**: Leis, decretos e normas citadas
-2. **Competências**: Quem regula o quê (União, Estado, Município)
-3. **Processos**: Fluxos de licenciamento, fiscalização, etc.
-4. **Desafios**: Lacunas ou conflitos mencionados
-5. **Por Região**: Diferenças entre Sul e Nordeste quando aplicável
-6. **Exemplos**: Casos específicos dos documentos
-
-### REGRAS
-✓ Cite leis/normas específicas quando mencionadas
-✓ Inclua citação de página para cada informação
-✓ Se houver lacunas na documentação, informe
-✓ Resposta completa e técnica
-
-### PERGUNTA
-{pergunta}
-
-### RESPOSTA
-"""
+RESPOSTA — inclua:
+1. Instrumentos legais citados (lei/decreto/norma + número quando disponível)
+2. Competências e responsabilidades
+3. Lacunas ou conflitos mencionados nos documentos"""
     }
-    
+
     return prompts.get(tipo, prompts["padrao"])
 
+
 # ============================================================================
-# 🎯 FORMATADOR DE TABELAS (CORREÇÃO MANTIDA)
+# 🎯 FORMATADOR DE TABELAS
 # ============================================================================
 def formatar_tabela_markdown(texto):
     linhas = texto.split('\n')
     resultado = []
     i = 0
-    
     while i < len(linhas):
         linha = linhas[i].strip()
-        
         if linha.startswith('|') and linha.count('|') >= 3:
             tabela = []
             while i < len(linhas) and (linhas[i].strip().startswith('|') or '---' in linhas[i]):
-                tabela_linha = linhas[i].strip()
-                partes = [p.strip() for p in tabela_linha.split('|') if p.strip()]
+                partes = [p.strip() for p in linhas[i].strip().split('|') if p.strip()]
                 if len(partes) >= 2:
                     tabela.append('| ' + ' | '.join(partes) + ' |')
                 else:
-                    tabela.append(tabela_linha)
+                    tabela.append(linhas[i].strip())
                 i += 1
-            
-            if len(tabela) >= 2 and '---' not in tabela[1]:
+            if len(tabela) >= 2 and '---' not in (tabela[1] if len(tabela) > 1 else ''):
                 cols = tabela[0].count('|') - 1
-                separador = '| ' + ' | '.join(['---'] * cols) + ' |'
-                tabela.insert(1, separador)
-            
+                tabela.insert(1, '| ' + ' | '.join(['---'] * cols) + ' |')
             resultado.extend(tabela)
         else:
             resultado.append(linha)
             i += 1
-    
     return '\n'.join(resultado)
 
-# ============================================================================
-# 🎨 FUNÇÃO PARA EXIBIR SCORE COM VISUAL MELHORADO
-# ============================================================================
-def exibir_score(score):
-    if score >= 4:
-        return f'<span class="score-badge score-high">🟢 Alta ({score})</span>'
+
+def exibir_score_html(score):
+    if score >= 5:
+        return f'<span class="score-badge score-high">▲ Alta ({score})</span>'
     elif score >= 2:
-        return f'<span class="score-badge score-medium">🟡 Média ({score})</span>'
+        return f'<span class="score-badge score-medium">● Média ({score})</span>'
     else:
-        return f'<span class="score-badge score-low">🔵 Baixa ({score})</span>'
+        return f'<span class="score-badge score-low">▼ Baixa ({score})</span>'
+
 
 # ============================================================================
 # 📚 BARRA LATERAL
 # ============================================================================
 with st.sidebar:
     st.markdown("""
-    <div style="text-align: center; padding: 20px 0; background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%); 
-                border-radius: 15px; margin-bottom: 20px;">
-        <div style="font-size: 4em;">📚</div>
-        <h3 style="color: white; margin: 10px 0;">Biblioteca PEM</h3>
-        <p style="color: rgba(255,255,255,0.85); font-size: 0.85em;">Cadernos Setoriais Oficiais</p>
+    <div class="sidebar-header">
+        <div style="font-size:3.5em;">📚</div>
+        <h3 style="color:white;margin:10px 0 4px;">Biblioteca PEM</h3>
+        <p style="color:rgba(255,255,255,0.8);font-size:0.82em;margin:0;">Cadernos Setoriais Oficiais</p>
     </div>
     """, unsafe_allow_html=True)
-    
+
     st.markdown("**🔗 Fontes Oficiais**")
     st.markdown("""
-    <a href="https://www.marinha.mil.br/secirm/psrm/pem/cadernos-setoriais-pem-nordeste" 
+    <a href="https://www.marinha.mil.br/secirm/psrm/pem/cadernos-setoriais-pem-nordeste"
        target="_blank" class="source-link">
-        <span class="source-link-icon">🌴</span> Cadernos Nordeste
+        <span>🌴</span> Cadernos Nordeste
     </a>
-    <a href="https://www.marinha.mil.br/secirm/pt-br/psrm/pem/cadernos-setoriais-pem-sul" 
+    <a href="https://www.marinha.mil.br/secirm/pt-br/psrm/pem/cadernos-setoriais-pem-sul"
        target="_blank" class="source-link">
-        <span class="source-link-icon">🗺️</span> Cadernos Sul
+        <span>🗺️</span> Cadernos Sul
     </a>
     """, unsafe_allow_html=True)
-    
+
     st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
-    
-    st.markdown("<div class='sidebar-section'>", unsafe_allow_html=True)
-    st.markdown("<h4>📍 Região Sul</h4>", unsafe_allow_html=True)
+
+    st.markdown('<div class="sidebar-section"><h4>📍 Região Sul</h4>', unsafe_allow_html=True)
     escolha_sul = st.selectbox("", list(CADERNOS_SUL.keys()), key="sul_select", label_visibility="collapsed")
     st.markdown("</div>", unsafe_allow_html=True)
-    
-    st.markdown("<div class='sidebar-section'>", unsafe_allow_html=True)
-    st.markdown("<h4>📍 Região Nordeste</h4>", unsafe_allow_html=True)
+
+    st.markdown('<div class="sidebar-section"><h4>📍 Região Nordeste</h4>', unsafe_allow_html=True)
     escolha_ne = st.selectbox("", list(CADERNOS_NE.keys()), key="ne_select", label_visibility="collapsed")
     st.markdown("</div>", unsafe_allow_html=True)
-    
+
     st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
-    
-    if "cadernos_ativos" not in st.session_state:
-        st.session_state.cadernos_ativos = []
-    if "todas_as_paginas_lidas" not in st.session_state:
-        st.session_state.todas_as_paginas_lidas = []
-    if "mensagens" not in st.session_state:
-        st.session_state.mensagens = []
-    
+
+    # Estado da sessão
+    for key, default in [
+        ("cadernos_ativos", []),
+        ("todas_as_paginas_lidas", []),
+        ("mensagens", [])
+    ]:
+        if key not in st.session_state:
+            st.session_state[key] = default
+
     if st.session_state.cadernos_ativos:
         st.markdown('<div class="loaded-notebooks"><h4 style="color:#059669;margin:0 0 12px 0;">✅ Carregados</h4>', unsafe_allow_html=True)
-        
         for regiao, nome, _ in st.session_state.cadernos_ativos:
             icon = "🗺️" if regiao == "SUL" else "🌴"
-            region_class = "region-sul" if regiao == "SUL" else "region-ne"
+            rc = "region-sul" if regiao == "SUL" else "region-ne"
             st.markdown(f"""
             <div class="loaded-notebook-item">
-                <span class="notebook-icon">{icon}</span>
-                <span class="notebook-region {region_class}">{regiao}</span>
-                <span style="color:#374151;flex:1;">{nome}</span>
+                <span>{icon}</span>
+                <span class="notebook-region {rc}">{regiao}</span>
+                <span style="color:#374151;flex:1;font-size:0.87em;">{nome}</span>
             </div>
             """, unsafe_allow_html=True)
-        
         st.markdown("</div>", unsafe_allow_html=True)
-        
+
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-value">{len(st.session_state.todas_as_paginas_lidas)}</div>
@@ -864,155 +705,262 @@ with st.sidebar:
         </div>
         """, unsafe_allow_html=True)
     else:
-        st.info("👈 Selecione cadernos para começar")
+        st.info("👈 Selecione um caderno para começar")
+
 
 # ============================================================================
-# 💾 CONTROLE DE ESTADO
+# 💾 CARREGAMENTO DE CADERNOS
 # ============================================================================
 cadernos_selecionados_agora = []
-if escolha_sul and escolha_sul != "Nenhum": 
+if escolha_sul and escolha_sul != "Nenhum":
     cadernos_selecionados_agora.append(("SUL", escolha_sul, CADERNOS_SUL[escolha_sul]))
-if escolha_ne and escolha_ne != "Nenhum": 
+if escolha_ne and escolha_ne != "Nenhum":
     cadernos_selecionados_agora.append(("NE", escolha_ne, CADERNOS_NE[escolha_ne]))
 
 if cadernos_selecionados_agora != st.session_state.cadernos_ativos:
     st.session_state.todas_as_paginas_lidas = []
     st.session_state.cadernos_ativos = cadernos_selecionados_agora.copy()
-    
+
     if cadernos_selecionados_agora:
         with st.sidebar.status("📖 Processando documentos...", expanded=True):
             for regiao, nome, file_id in cadernos_selecionados_agora:
                 paginas = ler_e_fatiar_pdf(file_id, nome, regiao)
                 st.session_state.todas_as_paginas_lidas.extend(paginas)
-                st.write(f"✓ {regiao} - {nome}: **{len(paginas)}** páginas")
-        st.sidebar.success("🎉 Pronto!")
+                st.write(f"✓ {regiao} — {nome}: **{len(paginas)}** páginas")
+        st.sidebar.success("🎉 Pronto para consulta!")
         st.rerun()
+
 
 # ============================================================================
 # 📑 ABAS PRINCIPAIS
 # ============================================================================
-aba1, aba2 = st.tabs(["🔮 Chat", "⚖️ Comparador"])
+aba1, aba2 = st.tabs(["🔮 Chat Analítico", "🗂️ Índice de Temas"])
 
+
+# ─────────────────────────────────────────────────────────────
+# ABA 1 — CHAT
+# ─────────────────────────────────────────────────────────────
 with aba1:
     st.markdown("""
-    <div style="background: white; border-radius: 15px; padding: 25px; 
-                box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px;">
-        <h3 style="color: #0C4A6E; margin-top: 0;">💬 Como posso ajudar?</h3>
-        <p style="color: #64748B; margin-bottom: 0;">
-            Faça perguntas sobre zoneamento, conservação, impactos, turismo, pesca e legislação.
+    <div class="chat-welcome">
+        <h3 style="color:#0C4A6E;margin-top:0;">💬 Faça sua pergunta</h3>
+        <p style="color:#64748B;margin:0;">
+            Perguntas sobre zoneamento, conservação, impactos, legislação, pesca, energia e mais.
+            Todas as respostas são fundamentadas e rastreáveis até a página de origem.
         </p>
     </div>
     """, unsafe_allow_html=True)
-    
-    if "mensagens" not in st.session_state:
-        st.session_state.mensagens = []
-    
+
     for m in st.session_state.mensagens:
-        with st.chat_message(m["role"], avatar="👤" if m["role"]=="user" else "🤖"):
+        with st.chat_message(m["role"], avatar="👤" if m["role"] == "user" else "🤖"):
             st.markdown(m["content"])
-    
-    pergunta = st.chat_input("Sua pergunta sobre os cadernos PEM...")
-    
+
+    pergunta = st.chat_input("Digite sua pergunta sobre os cadernos PEM...")
+
     if pergunta:
         if not st.session_state.cadernos_ativos:
-            st.error("⚠️ Selecione ao menos um caderno!")
+            st.error("⚠️ Selecione ao menos um caderno na barra lateral.")
         else:
             st.session_state.mensagens.append({"role": "user", "content": pergunta})
-            
+
             with st.chat_message("assistant", avatar="🤖"):
-                with st.spinner("🔍 Analisando documentos..."):
-                    pags = buscar_paginas_relevantes(pergunta, st.session_state.todas_as_paginas_lidas, 20)
-                    trechos = extrair_trechos_relevantes(pags, pergunta)
-                    
-                    contexto = ""
-                    for t in trechos:
-                        contexto += f"\n{t['cabecalho']}\n{t['texto']}\n"
-                    
-                    contexto, tokens = limitar_contexto(contexto, 10000)
+                with st.spinner("🔍 Buscando nos documentos..."):
+
+                    # 1. Busca por palavras-chave
+                    resultados = buscar_paginas_relevantes(
+                        pergunta, st.session_state.todas_as_paginas_lidas, limite=20
+                    )
+                    trechos = extrair_trechos_para_chat(resultados, pergunta)
+
+                    # 2. Monta contexto
+                    contexto = "\n".join(
+                        f"{t['cabecalho']}\n{t['texto']}"
+                        for t in trechos
+                    )
+                    contexto, tokens_est = limitar_contexto(contexto, max_tokens=8000)
+
+                    # 3. Mostra fontes consultadas
+                    with st.expander(
+                        f"📚 {len(trechos)} trechos | ~{tokens_est} tokens estimados",
+                        expanded=False
+                    ):
+                        for t in trechos:
+                            score_html = exibir_score_html(t['score'])
+                            st.markdown(
+                                f"`{t['cabecalho']}` {score_html}",
+                                unsafe_allow_html=True
+                            )
+
+                    # 4. Gera resposta via IA
                     tipo = detectar_tipo_pergunta(pergunta)
                     prompt = criar_prompt_final(pergunta, contexto, tipo)
-                    
-                    # Visual de fontes MELHORADO
-                    with st.expander(f"📚 {len(trechos)} trechos consultados ({tokens} tokens)", expanded=False):
-                        for t in trechos:
-                            score_html = exibir_score(t['score'])
-                            st.markdown(f"`{t['cabecalho']}` {score_html}", unsafe_allow_html=True)
-                        st.success(f"✅ Economia vs. documento completo: ~{int((1 - tokens/40000) * 100)}%")
-                    
-                    try:
-                        res = model.generate_content(prompt)
-                        resposta = formatar_tabela_markdown(res.text)
-                        st.markdown(resposta)
-                        st.session_state.mensagens.append({"role": "assistant", "content": resposta})
-                    except Exception as e:
-                        st.error(f"⚠️ Erro: {e}")
 
+                    if not trechos:
+                        aviso = "⚠️ Nenhum trecho relevante encontrado nos documentos carregados. Tente reformular a pergunta ou carregar outros cadernos."
+                        st.warning(aviso)
+                        st.session_state.mensagens.append({"role": "assistant", "content": aviso})
+                    else:
+                        try:
+                            res = model.generate_content(prompt)
+                            resposta = formatar_tabela_markdown(res.text)
+                            st.markdown(resposta)
+                            st.session_state.mensagens.append({"role": "assistant", "content": resposta})
+                        except Exception as e:
+                            st.error(f"⚠️ Erro na geração: {e}")
+
+
+# ─────────────────────────────────────────────────────────────
+# ABA 2 — ÍNDICE DE TEMAS (sem IA, zero alucinação)
+# ─────────────────────────────────────────────────────────────
 with aba2:
-    if len(st.session_state.cadernos_ativos) < 2:
-        st.markdown("""
-        <div style="background: #FFFBEB; border-radius: 15px; padding: 35px; 
-                    border: 2px solid #FCD34D; text-align: center;">
-            <div style="font-size: 3.5em; margin-bottom: 15px;">💡</div>
-            <h3 style="color: #92400E; margin-top: 0;">Comparação Regional</h3>
-            <p style="color: #78350F; margin-bottom: 25px;">
-                Selecione <strong>um caderno do Sul e um do Nordeste</strong> na barra lateral.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+    st.markdown("""
+    <div class="chat-welcome">
+        <h3 style="color:#0C4A6E;margin-top:0;">🗂️ Índice de Temas</h3>
+        <p style="color:#64748B;margin:0;">
+            Descubra em quais páginas um tema é mencionado. A busca é feita diretamente no texto
+            dos documentos — <strong>sem IA</strong>, sem alucinação, resultado 100% rastreável.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not st.session_state.cadernos_ativos:
+        st.warning("⚠️ Selecione ao menos um caderno na barra lateral para usar o Índice.")
     else:
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #0C4A6E 0%, #0369A1 100%); 
-                    border-radius: 15px; padding: 25px; color: white; margin-bottom: 20px;">
-            <h3 style="margin-top: 0;">⚖️ Comparação Estratégica Regional</h3>
-            <p style="margin-bottom: 0; opacity: 0.92;">Sul vs Nordeste</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        tema_comparacao = st.text_input(
-            "🎯 Tema da comparação:",
-            placeholder="Ex: zoneamento, licenciamento, conservação...",
-            value="diretrizes zoneamento conservação"
-        )
-        
-        if st.button("🚀 Executar Comparação", type="primary", use_container_width=True):
-            with st.spinner("📊 Analisando..."):
-                pags = buscar_paginas_relevantes(tema_comparacao, st.session_state.todas_as_paginas_lidas, 30)
-                trechos = extrair_trechos_relevantes(pags, tema_comparacao)
-                
-                contexto = ""
-                for t in trechos:
-                    contexto += f"\n{t['cabecalho']}\n{t['texto']}\n"
-                
-                contexto, tokens = limitar_contexto(contexto, 12000)
-                prompt = criar_prompt_final(tema_comparacao, contexto, "comparacao")
-                
-                with st.expander(f"📚 {len(trechos)} fontes consultadas ({tokens} tokens)", expanded=False):
-                    for t in trechos:
-                        score_html = exibir_score(t['score'])
-                        st.markdown(f"`{t['cabecalho']}` {score_html}", unsafe_allow_html=True)
-                
-                try:
-                    res = model.generate_content(prompt)
-                    resposta = formatar_tabela_markdown(res.text)
-                    st.markdown(resposta)
-                    
-                    st.download_button(
-                        label="📋 Baixar Comparação",
-                        data=resposta,
-                        file_name=f"comparacao_{tema_comparacao.replace(' ', '_')}.md",
-                        mime="text/markdown"
-                    )
-                except Exception as e:
-                    st.error(f"⚠️ Erro: {e}")
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            tema_indice = st.text_input(
+                "🔎 Tema ou palavra-chave:",
+                placeholder="Ex: zoneamento, licença ambiental, correntes marítimas...",
+                label_visibility="collapsed"
+            )
+        with col2:
+            btn_buscar = st.button("Buscar", type="primary", use_container_width=True)
+
+        col_a, col_b, col_c = st.columns(3)
+        with col_a:
+            min_ocorrencias = st.slider("Ocorrências mínimas", 1, 10, 1)
+        with col_b:
+            max_resultados = st.slider("Máx. páginas exibidas", 10, 100, 40)
+        with col_c:
+            mostrar_trecho = st.toggle("Mostrar trechos", value=True)
+
+        if btn_buscar and tema_indice.strip():
+            with st.spinner("🔎 Varrendo documentos..."):
+                resultados_indice = buscar_indice(
+                    tema_indice,
+                    st.session_state.todas_as_paginas_lidas,
+                    min_score=min_ocorrencias,
+                    max_resultados=max_resultados
+                )
+
+            if not resultados_indice:
+                st.markdown(f"""
+                <div class="no-results">
+                    <div style="font-size:2.5em;margin-bottom:12px;">🔍</div>
+                    <h4 style="color:#92400E;margin:0 0 8px;">Nenhuma menção encontrada</h4>
+                    <p style="color:#78350F;margin:0;">
+                        O tema <strong>"{tema_indice}"</strong> não foi encontrado
+                        com mínimo de {min_ocorrencias} ocorrência(s).
+                        Tente variações ou reduza o mínimo de ocorrências.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                # Agrupamento por caderno
+                por_caderno = {}
+                for r in resultados_indice:
+                    chave = f"{r['regiao']} | {r['caderno']}"
+                    if chave not in por_caderno:
+                        por_caderno[chave] = []
+                    por_caderno[chave].append(r)
+
+                paginas_total = sum(len(v) for v in por_caderno.values())
+                ocorrencias_total = sum(r['score'] for r in resultados_indice)
+
+                # Sumário
+                st.markdown(f"""
+                <div class="index-summary">
+                    <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:center;">
+                        <div>
+                            <div style="font-size:2.2em;font-weight:800;">{paginas_total}</div>
+                            <div style="opacity:0.85;font-size:0.9em;">páginas com menções</div>
+                        </div>
+                        <div>
+                            <div style="font-size:2.2em;font-weight:800;">{ocorrencias_total}</div>
+                            <div style="opacity:0.85;font-size:0.9em;">ocorrências totais</div>
+                        </div>
+                        <div>
+                            <div style="font-size:2.2em;font-weight:800;">{len(por_caderno)}</div>
+                            <div style="opacity:0.85;font-size:0.9em;">cadernos envolvidos</div>
+                        </div>
+                        <div style="flex:1;min-width:200px;">
+                            <div style="opacity:0.85;font-size:0.88em;margin-bottom:4px;">Tema pesquisado</div>
+                            <div style="font-size:1.1em;font-weight:700;background:rgba(255,255,255,0.15);
+                                        padding:6px 14px;border-radius:8px;display:inline-block;">
+                                🔍 {tema_indice}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                palavras_busca = extrair_palavras_chave(tema_indice)
+
+                # Resultados agrupados por caderno
+                for chave, paginas in por_caderno.items():
+                    regiao, caderno = chave.split(" | ", 1)
+                    icon = "🗺️" if regiao == "SUL" else "🌴"
+                    rc_class = "region-sul" if regiao == "SUL" else "region-ne"
+                    total_ocorr = sum(p['score'] for p in paginas)
+
+                    with st.expander(
+                        f"{icon} {caderno}  —  {len(paginas)} pág. · {total_ocorr} ocorrências",
+                        expanded=True
+                    ):
+                        for r in paginas:
+                            score_html = exibir_score_html(r['score'])
+
+                            trecho_html = ""
+                            if mostrar_trecho and r['trecho']:
+                                trecho_destacado = destacar_palavras(
+                                    re.sub(r'<[^>]+>', '', r['trecho']),
+                                    palavras_busca
+                                )
+                                trecho_html = f'<div class="index-snippet">{trecho_destacado}</div>'
+
+                            st.markdown(f"""
+                            <div class="index-result">
+                                <div class="index-header">
+                                    <span class="index-location">{r['cabecalho']}</span>
+                                    {score_html}
+                                </div>
+                                {trecho_html}
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                # Exportação
+                st.markdown("---")
+                linhas_export = [f"# Índice — {tema_indice}\n"]
+                linhas_export.append(f"Total: {paginas_total} páginas | {ocorrencias_total} ocorrências\n")
+                for r in resultados_indice:
+                    linhas_export.append(f"- {r['cabecalho']} ({r['score']} ocorrência(s))")
+
+                st.download_button(
+                    label="📋 Exportar índice (.txt)",
+                    data="\n".join(linhas_export),
+                    file_name=f"indice_{tema_indice.replace(' ', '_')}.txt",
+                    mime="text/plain"
+                )
+
 
 # ============================================================================
 # 🌊 FOOTER
 # ============================================================================
-st.markdown("<div class='wave-divider'></div>", unsafe_allow_html=True)
-
 st.markdown("""
-<div style="text-align: center; padding: 30px; color: #64748B; font-size: 0.9em;">
-    <p>🌊 <strong>Assistente PEM</strong> | Marinha do Brasil - SECIRM</p>
-    <p style="opacity: 0.5; font-size: 0.8em;">⚠️ Valide informações nos documentos oficiais</p>
+<div class="footer">
+    <p>🌊 <strong>Assistente PEM</strong> · Marinha do Brasil — SECIRM</p>
+    <p style="opacity:0.5;font-size:0.82em;margin-top:4px;">
+        ⚠️ Sempre valide as informações nos documentos oficiais antes de utilizá-las.
+    </p>
 </div>
 """, unsafe_allow_html=True)
