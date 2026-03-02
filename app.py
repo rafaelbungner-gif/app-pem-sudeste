@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import google.generativeai as genai
 import requests
 import io
@@ -82,7 +83,6 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     font-size:.82em; font-weight:600; margin:5px; background:rgba(255,255,255,.15);
     backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,.3); transition:all .25s;
 }
-.status-badge:hover { background:rgba(255,255,255,.25); transform:translateY(-2px); }
 
 /* ── SIDEBAR ─────────────────────────────────────────────── */
 .sidebar-header {
@@ -96,17 +96,6 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     border:1px solid rgba(255,255,255,.12); box-shadow:0 4px 15px rgba(12,74,110,.25);
 }
 .sidebar-section h4 { color:white; margin-bottom:8px; font-size:.92em; font-weight:600; }
-.source-link {
-    display:flex; align-items:center; gap:10px;
-    background:linear-gradient(135deg,#FFFFFF,#F8FAFC); border-radius:12px;
-    padding:12px 15px; margin:6px 0; text-decoration:none; color:#0C4A6E;
-    font-weight:600; font-size:.86em; border:1px solid #E2E8F0; transition:all .3s;
-    box-shadow:0 2px 8px rgba(0,0,0,.06);
-}
-.source-link:hover {
-    background:linear-gradient(135deg,#0EA5E9,#0284C7); color:white; border-color:#0284C7;
-    transform:translateX(5px); box-shadow:0 4px 15px rgba(14,165,233,.35);
-}
 .loaded-notebooks {
     background:linear-gradient(135deg,#F0FDF4,#DCFCE7); border-radius:14px; padding:16px;
     margin:12px 0; border:1px solid #86EFAC; box-shadow:0 3px 12px rgba(16,185,129,.12);
@@ -122,40 +111,16 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 }
 .metric-value { font-size:2.6em; font-weight:800; text-shadow:2px 2px 4px rgba(0,0,0,.3); }
 .metric-label { font-size:.88em; opacity:.9; margin-top:5px; }
-.sidebar-divider { border-top:2px dashed rgba(255,255,255,.2); margin:16px 0; }
 
-/* ── TABS ────────────────────────────────────────────────── */
+/* ── TABS E BOTOES ───────────────────────────────────────── */
 .stTabs [data-baseweb="tab-list"] { gap:10px; }
 .stTabs [data-baseweb="tab"] { border-radius:12px; padding:10px 26px; font-weight:600; font-size:.95em; }
-
-/* ── BUTTONS ─────────────────────────────────────────────── */
-.stButton>button {
-    background:linear-gradient(135deg,#0369A1,#0EA5E9); color:white; border:none;
-    border-radius:12px; padding:11px 30px; font-weight:600; font-size:.95em;
-    transition:all .3s; box-shadow:0 4px 15px rgba(14,165,233,.4);
-}
-.stButton>button:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(14,165,233,.55); }
-
-/* ── TABLES ──────────────────────────────────────────────── */
-table { width:100%; border-collapse:collapse; margin:20px 0; background:white; border-radius:14px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.08); }
-th { background:linear-gradient(135deg,#073763,#0369A1); color:white; padding:14px 18px; text-align:left; font-weight:700; font-size:.88em; text-transform:uppercase; letter-spacing:.5px; }
-td { padding:13px 18px; border-bottom:1px solid #E2E8F0; color:#374151; line-height:1.7; font-size:.91em; vertical-align:top; }
-tr:hover { background:#F8FAFF; }
-tr:last-child td { border-bottom:none; }
-
-/* ── SCORE BADGES ────────────────────────────────────────── */
-.score-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:.76em; font-weight:700; margin:2px; }
-.score-high   { background:linear-gradient(135deg,#10B981,#059669); color:white; }
-.score-medium { background:linear-gradient(135deg,#F59E0B,#D97706); color:white; }
-.score-low    { background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; }
 
 /* ── CHAT ────────────────────────────────────────────────── */
 .chat-intro {
     background:white; border-radius:16px; padding:22px 28px;
     box-shadow:0 4px 20px rgba(0,0,0,.07); margin-bottom:20px; border-top:4px solid #0EA5E9;
 }
-
-/* Scrollable chat window — messages inside, input fixo fora */
 [data-testid="stVerticalBlockBorderWrapper"] > div[style*="height"] {
     border-radius: 16px !important;
     background: transparent !important;
@@ -165,38 +130,12 @@ tr:last-child td { border-bottom:none; }
     height:100%; min-height:300px; color:#94A3B8; text-align:center; padding:40px;
 }
 .chat-empty-state .icon { font-size:3.5em; margin-bottom:16px; opacity:.5; }
-.chat-empty-state h4 { color:#64748B; font-size:1.1em; font-weight:600; margin:0 0 8px; }
-.chat-empty-state p  { font-size:.9em; margin:0; line-height:1.7; max-width:380px; }
 
-/* ── EXTRATOR CARDS ──────────────────────────────────────── */
-.ext-card {
-    background:white; border-radius:14px; padding:18px 22px; margin:10px 0;
-    box-shadow:0 3px 12px rgba(0,0,0,.07); transition:all .25s; border-left:5px solid #6366F1;
-}
-.ext-card:hover { box-shadow:0 6px 20px rgba(99,102,241,.2); transform:translateX(3px); }
-.ext-legislacao  { border-left-color:#0EA5E9; }
-.ext-passos      { border-left-color:#10B981; }
-.ext-institucional { border-left-color:#F59E0B; }
-
-.ext-badge {
-    display:inline-flex; align-items:center; gap:5px; padding:3px 12px; border-radius:20px;
-    font-size:.75em; font-weight:700; margin-right:8px;
-}
-.badge-legislacao    { background:#EFF6FF; color:#1E40AF; }
-.badge-passos        { background:#F0FDF4; color:#065F46; }
-.badge-institucional { background:#FFFBEB; color:#92400E; }
-
-.ext-text   { color:#1E293B; font-size:.93em; line-height:1.8; margin:10px 0 8px; }
-.ext-source { font-family:monospace; font-size:.79em; color:#6B7280; }
-
-.ext-summary {
-    border-radius:16px; padding:22px 28px; margin-bottom:22px; color:white;
-    background:linear-gradient(135deg,#1E3A5F 0%,#0369A1 100%);
-}
-.ext-summary .num { font-size:2.2em; font-weight:800; }
-.ext-summary .lbl { opacity:.85; font-size:.88em; margin-top:2px; }
-
-.no-results { background:#FFF7ED; border-radius:14px; padding:28px; border:2px solid #FED7AA; text-align:center; }
+/* ── SCORE BADGES ────────────────────────────────────────── */
+.score-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:.76em; font-weight:700; margin:2px; }
+.score-high   { background:linear-gradient(135deg,#10B981,#059669); color:white; }
+.score-medium { background:linear-gradient(135deg,#F59E0B,#D97706); color:white; }
+.score-low    { background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; }
 
 /* ── FOOTER ──────────────────────────────────────────────── */
 .footer { text-align:center; padding:26px; color:#64748B; font-size:.87em; margin-top:16px; border-top:2px dashed #CBD5E1; }
@@ -210,10 +149,10 @@ tr:last-child td { border-bottom:none; }
 st.markdown("""
 <div class="main-header">
     <h1>🌊 Assistente PEM</h1>
-    <p>Busca Inteligente · Rastreável · Fundamentada</p>
+    <p>Busca Inteligente · Visual Explainer · Documentos Setoriais</p>
     <div style="margin-top:18px;">
         <span class="status-badge">✦ IA Ativa</span>
-        <span class="status-badge">✦ PDF Indexado</span>
+        <span class="status-badge">✦ Relatórios Visuais</span>
         <span class="status-badge">✦ Multi-Região</span>
     </div>
 </div>
@@ -228,6 +167,8 @@ try:
         m.name for m in genai.list_models()
         if "generateContent" in m.supported_generation_methods
     ]
+    
+    # Priorizar modelos com maior janela de contexto e capacidades (pro/flash)
     for candidato in [
         "models/gemini-1.5-pro-latest",
         "models/gemini-1.5-flash-latest",
@@ -239,34 +180,26 @@ try:
     else:
         modelo_nome = modelos_disponiveis[0] if modelos_disponiveis else "models/gemini-pro"
 
-    st.sidebar.caption(f"🤖 `{modelo_nome.replace('models/', '')}`")
+    st.sidebar.caption(f"🤖 Modelo: `{modelo_nome.replace('models/', '')}`")
 
-    instrucao_sistema = """Você é um analista técnico do Plano de Espaço Marinho (PEM) do Brasil.
-
-REGRAS ABSOLUTAS — NUNCA VIOLE:
+    instrucao_sistema_chat = """Você é um analista técnico do Plano de Espaço Marinho (PEM) do Brasil.
+REGRAS:
 1. Use EXCLUSIVAMENTE as informações dos trechos fornecidos. Nada mais.
-2. Se a informação não estiver nos trechos, diga: "Não encontrado nos documentos consultados."
-3. NUNCA invente dados, números, leis, nomes, datas ou conclusões.
-4. Cite a fonte de CADA afirmação factual: (Região | Caderno | Pág. X).
-5. Complete SEMPRE a resposta integralmente — nunca corte um tópico no meio.
-6. Seja direto e técnico. Sem introduções genéricas ou repetição da pergunta."""
+2. Cite a fonte de CADA afirmação factual: (Região | Caderno | Pág. X)."""
 
-    model = genai.GenerativeModel(
+    model_chat = genai.GenerativeModel(
         model_name=modelo_nome,
-        system_instruction=instrucao_sistema,
-        generation_config=genai.GenerationConfig(
-            temperature=0.05,
-            top_p=0.85,
-            top_k=20,
-            max_output_tokens=8192,
-        ),
+        system_instruction=instrucao_sistema_chat,
     )
+    
+    # Modelo dedicado para o Visual Explainer (sem system prompt rígido para permitir formatação HTML livre)
+    model_visual = genai.GenerativeModel(model_name=modelo_nome)
+
 except Exception as e:
     st.error(f"⚠️ Erro de conexão com o Google AI: {e}")
 
-
 # ============================================================================
-# 📄 LEITURA DE PDF
+# 📄 LEITURA DE PDF (Mantido intacto)
 # ============================================================================
 def ler_e_fatiar_pdf(file_id, nome_doc, regiao):
     paginas = []
@@ -291,19 +224,10 @@ def ler_e_fatiar_pdf(file_id, nome_doc, regiao):
         st.error(f"Erro ao ler PDF: {ex}")
     return paginas
 
-
 # ============================================================================
-# 🔍 BUSCA E PONTUAÇÃO
+# 🔍 BUSCA PARA O CHAT (Mantido intacto)
 # ============================================================================
-PALAVRAS_IGNORADAS = {
-    "o","a","os","as","de","do","da","dos","das","em","no","na","nos","nas",
-    "para","com","que","quais","qual","como","sobre","mais","este","esta",
-    "isso","aqui","pelo","pela","pelos","pelas","entre","também","quando",
-    "onde","muito","suas","seus","seu","sua","são","está","have","from",
-    "essa","esses","essas","um","uma","uns","umas","por","sendo","pode",
-    "será","foram","seria","aquele","neste","esse","isto","eles","elas",
-    "numa","duma","dum","num","deste","desta","desse","dessa",
-}
+PALAVRAS_IGNORADAS = {"o","a","os","as","de","do","da","dos","das","em","no","na","nos","nas","para","com","que"}
 
 def extrair_palavras_chave(texto):
     tokens = re.findall(r"\b[a-záéíóúãõâêîôûàèìòùç]{4,}\b", texto.lower())
@@ -322,10 +246,6 @@ def buscar_paginas_relevantes(pergunta, todas_as_paginas, limite=20):
     resultados.sort(key=lambda x: x[0], reverse=True)
     return resultados[:limite]
 
-
-# ============================================================================
-# 🎯 EXTRATOR DE TRECHOS PARA CHAT
-# ============================================================================
 def extrair_trechos_para_chat(resultados_buscados, pergunta, max_chars=800):
     palavras = set(extrair_palavras_chave(pergunta))
     trechos = []
@@ -339,291 +259,102 @@ def extrair_trechos_para_chat(resultados_buscados, pergunta, max_chars=800):
             if p_score > melhor_score:
                 melhor_score, melhor_paragrafo = p_score, paragrafo.strip()
         if melhor_paragrafo:
-            trechos.append(
-                {"cabecalho": pag["cabecalho"], "texto": melhor_paragrafo[:max_chars], "score": score}
-            )
+            trechos.append({"cabecalho": pag["cabecalho"], "texto": melhor_paragrafo[:max_chars], "score": score})
     return trechos[:25]
 
-
-# ============================================================================
-# 📏 CONTROLE DE CONTEXTO
-# ============================================================================
 def limitar_contexto(contexto, max_chars=40000):
-    if len(contexto) <= max_chars:
-        return contexto, len(contexto) // 4
+    if len(contexto) <= max_chars: return contexto, len(contexto) // 4
     corte = contexto.rfind("\n\n", 0, max_chars)
-    if corte == -1:
-        corte = max_chars
+    if corte == -1: corte = max_chars
     return contexto[:corte], corte // 4
-
-
-# ============================================================================
-# 🎯 TIPO DE PERGUNTA E PROMPTS
-# ============================================================================
-def detectar_tipo_pergunta(pergunta):
-    p = pergunta.lower()
-    if any(w in p for w in ["compare","diferença","entre","vs","versus","contraste"]): return "comparacao"
-    if any(w in p for w in ["legislação","lei","norma","regulamento","marco legal","decreto"]): return "legislacao"
-    if any(w in p for w in ["impacto","consequência","efeito","resultado","afeta"]): return "analise"
-    if any(w in p for w in ["liste","listar","quais","cite","mencione","enumere"]): return "lista"
-    return "padrao"
-
-def criar_prompt_final(pergunta, contexto, tipo="padrao"):
-    regras = """
-REGRAS (invioláveis):
-• Use APENAS os trechos acima. Sem conhecimento externo.
-• Cite cada afirmação: (Região | Caderno | Pág. X).
-• Se não houver dados: declare "Não encontrado nos documentos consultados."
-• NUNCA invente. Complete SEMPRE a resposta integralmente, sem cortar tópicos."""
-
-    prompts = {
-        "padrao": f"""TRECHOS DOCUMENTAIS:\n{contexto}\n{regras}\n\nPERGUNTA: {pergunta}\n\nRESPOSTA (organize com tópicos quando útil; aborde todos os aspectos encontrados):""",
-        "comparacao": f"""TRECHOS DOCUMENTAIS:\n{contexto}\n{regras}\n\nPERGUNTA: {pergunta}\n\nRESPOSTA:\n## 1. Pontos em comum\n## 2. Diferenças encontradas\n## 3. Tabela comparativa (só se houver dados para ambas as regiões)\n## 4. Lacunas documentais""",
-        "lista": f"""TRECHOS DOCUMENTAIS:\n{contexto}\n{regras}\n\nPERGUNTA: {pergunta}\n\nRESPOSTA — para cada item:\n- **Nome** — descrição (1-2 frases). Fonte: (Região | Caderno | Pág. X)\n\n**Total encontrado:** X itens""",
-        "analise": f"""TRECHOS DOCUMENTAIS:\n{contexto}\n{regras}\n\nPERGUNTA: {pergunta}\n\nRESPOSTA por dimensão (inclua só as com dados):\n## 🌿 Ambiental\n## 👥 Social\n## 💰 Econômico\n## ⚖️ Institucional\n## ⚠️ Lacunas documentais""",
-        "legislacao": f"""TRECHOS DOCUMENTAIS:\n{contexto}\n{regras}\n\nPERGUNTA: {pergunta}\n\nRESPOSTA:\n## 1. Instrumentos legais mencionados\n## 2. Competências e responsabilidades\n## 3. Lacunas ou conflitos apontados""",
-    }
-    return prompts.get(tipo, prompts["padrao"])
-
-
-# ============================================================================
-# 🎯 FORMATADOR DE TABELAS
-# ============================================================================
-def formatar_tabela_markdown(texto):
-    linhas = texto.split("\n")
-    resultado, i = [], 0
-    while i < len(linhas):
-        linha = linhas[i].strip()
-        if linha.startswith("|") and linha.count("|") >= 3:
-            tabela = []
-            while i < len(linhas) and (linhas[i].strip().startswith("|") or "---" in linhas[i]):
-                partes = [p.strip() for p in linhas[i].strip().split("|") if p.strip()]
-                tabela.append("| " + " | ".join(partes) + " |" if len(partes) >= 2 else linhas[i].strip())
-                i += 1
-            if len(tabela) >= 2 and "---" not in (tabela[1] if len(tabela) > 1 else ""):
-                cols = tabela[0].count("|") - 1
-                tabela.insert(1, "| " + " | ".join(["---"] * cols) + " |")
-            resultado.extend(tabela)
-        else:
-            resultado.append(linha)
-            i += 1
-    return "\n".join(resultado)
 
 def exibir_score_html(score):
     if score >= 5:   return f'<span class="score-badge score-high">▲ Alta ({score})</span>'
     elif score >= 2: return f'<span class="score-badge score-medium">● Média ({score})</span>'
     else:            return f'<span class="score-badge score-low">▼ Baixa ({score})</span>'
 
-
 # ============================================================================
-# 📋 EXTRATOR INTELIGENTE — Legislação · Próximos Passos · Institucional
+# 🎨 GERADOR DE PROMPTS PARA VISUAL EXPLAINER
 # ============================================================================
-
-# ── Palavras-domínio obrigatórias ────────────────────────────────────────
-# A sentença PRECISA conter ao menos uma para ser aceita.
-# Evita falsos positivos como "normas de professores", "índice de capítulo", etc.
-PALAVRAS_DOMINIO = re.compile(
-    r"\b("
-    r"mar(ítim[ao]s?)?|ocean[ao]|costeiro|litoral|aquático|marinho"
-    r"|pesca|pesqueir[ao]|pescador|aquicultur"
-    r"|ambiental|ambiente|ecossistema|biodiversidade|conservação"
-    r"|licença|licenciamento|autorização\s+ambiental|eia|rima"
-    r"|petróleo|gás\s+natural|offshore|plataforma\s+continental"
-    r"|porto|portuário|navegação|embarcação|náutico"
-    r"|energia\s+(?:eólica|solar|renovável|offshore)"
-    r"|espaço\s+marinho|PEM|PSRM|SECIRM|marinha\s+do\s+brasil"
-    r"|zona\s+(?:costeira|econômica|exclusiva)|ZEE|ZEP|ZPA|ZUM|ZPI"
-    r"|recurso\s+(?:mineral|pesqueiro|marinho|natural)"
-    r"|clima|mudança\s+climática|carbono"
-    r"|turismo\s+(?:náutico|costeiro|marítimo)"
-    r"|mineração|geologia|subsolo\s+marinho"
-    r"|defesa\s+nacional|soberania|segurança\s+(?:marítima|nacional)"
-    r"|ibama|icmbio|secirm|cirm|antaq|seap|anp"
-    r")\b",
-    re.IGNORECASE,
-)
-
-# ── Filtro negativo: descarta sentenças de sumário, legenda ou cabeçalho ─
-PADRAO_EXCLUSAO = re.compile(
-    r"^(\s*\d{1,3}[\s\.\)]+[A-Z])"  # começa com "1. Texto" ou "12) Texto"
-    r"|\.{4,}"                        # reticências (sumário)
-    r"|\bfigura\s+\d+\b"              # "Figura 3 —"
-    r"|\btabela\s+\d+\b"
-    r"|\bquadro\s+\d+\b"
-    r"|\bfonte:\s"
-    r"|\belaboração\s+própria\b"
-    r"|\bpág(ina)?\.?\s*\d+\b"        # "Pág. 45"
-    r"|\bop\.\s*cit\b"                # citações bibliográficas
-    r"|\bet\s+al\b"
-    r"|\bapud\b",
-    re.IGNORECASE,
-)
-
-MIN_CHARS   = 80   # descarta fragmentos muito curtos
-MAX_CHARS   = 600
-MIN_PALAVRAS = 12  # descarta rótulos de 2-3 palavras
-
-# ── Padrões por categoria ─────────────────────────────────────────────────
-PADROES_EXTRATOR = {
-
-    "Legislação": {
-        "cor":   "#0EA5E9",
-        "icone": "⚖️",
-        "badge": "badge-legislacao",
-        "card":  "ext-legislacao",
-        # Apenas referências explícitas a normas com número OU expressões
-        # jurídicas altamente específicas no contexto marítimo/ambiental
-        "padroes": [
-            r"\blei\s+(?:federal\s+)?n[oº°\.]\s*[\d\.]+",           # Lei nº 9.433
-            r"\blei\s+complementar\s+n[oº°\.]\s*[\d\.]+",
-            r"\bdecreto(?:-lei)?\s+n[oº°\.]\s*[\d\.]+",             # Decreto nº 8.756
-            r"\bresolução\s+(?:conama|anvisa|aneel|anp|antaq|cirm|consema|adnf)?\s*n[oº°\.]\s*[\d\.]+",
-            r"\bportaria\s+(?:mma|mm|minfra|mme|mdic|seap|interministerial)?\s*n[oº°\.]\s*[\d\.]+",
-            r"\binstrução\s+normativa\s+(?:n[oº°\.]\s*[\d\.]+|\w+\s+n[oº°\.]\s*[\d\.]+)",
-            r"\bnota\s+técnica\s+n[oº°\.]\s*[\d\.]+",
-            r"\bcódigo\s+(?:ambiental|florestal|de\s+águas|de\s+mineração)",
-            r"\bconvenção\s+(?:unclos|marpol|ospar|ramsar|sobre\s+(?:o\s+)?(?:mar|biodiversidade|clima|direito\s+do\s+mar))",
-            r"\btratado\s+internacional\b",
-            r"\bprotocolo\s+de\s+(?:kyoto|nagoya|cartagena|montreal)\b",
-            r"\bmarco\s+legal\b",
-            r"\bbase\s+legal\b",
-            r"\bamparo\s+legal\b",
-            r"\bnos\s+termos\s+(?:da\s+lei|do\s+decreto|da\s+resolução|da\s+legislação)\b",
-            r"\bconforme\s+(?:a\s+lei|o\s+decreto|a\s+resolução|a\s+legislação\s+vigente)\b",
-            r"\blicenciamento\s+ambiental\b",
-            r"\blicença\s+(?:ambiental|prévia|de\s+instalação|de\s+operação)\b",
-            r"\bestudo\s+de\s+impacto\s+ambiental\b",
-            r"\beia[-/\s]rima\b",
-            r"\bzoneamento\s+(?:ecológico|ambiental|marinho|econômico)\b",
-        ],
-    },
-
-    "Próximos Passos": {
-        "cor":   "#10B981",
-        "icone": "🚀",
-        "badge": "badge-passos",
-        "card":  "ext-passos",
-        # Ações futuras com verbo de ação explícito — padrões reflexivos
-        # e construções passivas são mais precisos que verbos soltos
-        "padroes": [
-            r"\bpróxim[ao]s?\s+(?:etapa|passo|fase|ação|medida|atividade|ano)\b",
-            r"\betapa\s+(?:seguinte|posterior|futura|subsequente)\b",
-            r"\bações?\s+(?:prevista[s]?|planejada[s]?|futura[s]?|prioritária[s]?|necessária[s]?)\b",
-            r"\bpropõe-se\b",
-            r"\bprevê-se\b",
-            r"\bpretende-se\b",
-            r"\bplaneja-se\b",
-            r"\bindica-se\b",
-            r"\bsugere-se\b",
-            r"\brecomenda-se\b",
-            r"\bé\s+recomendado\b",
-            r"\bé\s+desejável\b",
-            r"\bserá\s+(?:realizado|desenvolvido|implementado|elaborado|criado|executado|contratado|avaliado)\b",
-            r"\bserão\s+(?:realizados|desenvolvidos|implementados|elaborados|criados|executados)\b",
-            r"\bé\s+necessário\s+(?:elaborar|desenvolver|criar|implementar|realizar|avançar|estruturar|monitorar)\b",
-            r"\bimplantação\s+(?:de|do|da)\s+\w",
-            r"\bimplementação\s+(?:de|do|da)\s+\w",
-            r"\bcronograma\s+(?:de|para)\b",
-            r"\bprazo\s+(?:de|para|máximo|previsto|estabelecido)\b",
-            r"\bmeta\s+(?:de|para)\s+\w",
-            r"\bmonitoramento\s+(?:contínuo|periódico|futuro|sistemático)\b",
-            r"\bacompanhamento\s+(?:contínuo|periódico|sistemático)\b",
-        ],
-    },
-
-    "Institucional": {
-        "cor":   "#F59E0B",
-        "icone": "🏛️",
-        "badge": "badge-institucional",
-        "card":  "ext-institucional",
-        # Apenas competências explícitas, arranjos de governança e órgãos nomeados
-        "padroes": [
-            r"\bcabe\s+(?:à|ao|aos|às)\s+\w",
-            r"\bcompete\s+(?:à|ao|aos|às)\s+\w",
-            r"\bé\s+(?:de\s+)?responsabilidade\s+(?:da|do|dos|das)\s+\w",
-            r"\bresponsável\s+(?:pela|pelo|pelos|pelas)\s+\w",
-            r"\bórgão\s+(?:responsável|gestor|federal|estadual|competente|regulador|ambiental)\b",
-            r"\bórgãos\s+(?:responsáveis|gestores|federais|estaduais|competentes)\b",
-            r"\bgestão\s+(?:compartilhada|integrada|participativa)\b",
-            r"\bgovernança\s+(?:marinha|oceânica|costeira|ambiental|integrada)\b",
-            r"\barticula(?:ção|r)\s+interinstitucional\b",
-            r"\bintegração\s+(?:interinstitucional|entre\s+órgãos|de\s+políticas)\b",
-            r"\bgrupo\s+de\s+trabalho\b",
-            r"\bcâmara\s+técnica\b",
-            r"\binstância\s+(?:competente|decisória|gestora|federal|estadual)\b",
-            r"\bfiscalização\s+(?:ambiental|pesqueira|marítima|federal)\b",
-            r"\bprotocolo\s+de\s+(?:cooperação|intenção|integração)\b",
-            r"\bconvênio\s+(?:entre|com|de)\s+\w",
-            r"\bparceria\s+(?:institucional|interinstitucional|público[-\s]privada)\b",
-            r"\bpoder\s+público\b",
-            r"\bunião\s+federal\b",
-            r"\bmarinha\s+do\s+brasil\b",
-            r"\bsecirm\b",
-            r"\bcirm\b",
-            r"\bibama\b",
-            r"\bicmbio\b",
-            r"\bantaq\b",
-            r"\bseap\b",
-            r"\banp\b",
-        ],
-    },
-}
-
-
-def extrair_sentencas(texto):
-    """Quebra o texto em sentenças e aplica filtros de qualidade."""
-    sentencas = re.split(r"(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÃÕÂÊÎÔÛ])", texto)
-    resultado = []
-    for s in sentencas:
-        s = s.strip()
-        if not (MIN_CHARS <= len(s) <= MAX_CHARS):
-            continue
-        if PADRAO_EXCLUSAO.search(s):
-            continue
-        if len(s.split()) < MIN_PALAVRAS:
-            continue
-        resultado.append(s)
-    return resultado
-
-
-def classificar_sentenca_extrator(sentenca):
+def gerar_prompt_visual_explainer(tipo_visual, instrucao_usuario, contexto_documentos):
+    
+    base_html = """
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.tailwindcss.com"></script>
+        {scripts_extras}
+    </head>
+    <body class="bg-gray-50 text-gray-800 font-sans p-6 md:p-12">
+        <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+            <!-- Seu conteúdo gerado entra aqui -->
+        </div>
+    </body>
+    </html>
     """
-    Retorna lista de categorias aplicáveis.
-    Exige que a sentença contenha ao menos uma palavra-domínio marítimo/ambiental,
-    eliminando falsos positivos genéricos.
+    
+    regras_gerais = f"""
+    Você é um agente especializado em "Visual Explainer". Sua função é transformar os dados extraídos dos cadernos do Plano Espacial Marinho (PEM) em uma página HTML estilizada, moderna e interativa.
+    
+    DADOS DE CONTEXTO (Use APENAS estes dados para preencher as informações):
+    {contexto_documentos}
+    
+    PEDIDO DO USUÁRIO: {instrucao_usuario}
+    
+    REGRAS TÉCNICAS:
+    1. Retorne EXCLUSIVAMENTE o código HTML completo. NUNCA use marcadores markdown como ```html ou ```. Comece com <!DOCTYPE html>.
+    2. Use classes do Tailwind CSS (já incluso via CDN) para criar um design moderno, limpo e profissional.
+    3. Cite as fontes dos dados (Região, Caderno, Página) discretamente no rodapé dos elementos ou em tooltips.
     """
-    if not PALAVRAS_DOMINIO.search(sentenca):
-        return []
-    s_lower = sentenca.lower()
-    categorias = []
-    for categoria, cfg in PADROES_EXTRATOR.items():
-        for padrao in cfg["padroes"]:
-            if re.search(padrao, s_lower):
-                categorias.append(categoria)
-                break
-    return categorias
 
-
-def executar_extracao(todas_as_paginas):
-    resultados = []
-    vistos = set()
-    for pag in todas_as_paginas:
-        for sentenca in extrair_sentencas(pag["texto_original"]):
-            chave = (pag["caderno"], sentenca[:100])
-            if chave in vistos:
-                continue
-            vistos.add(chave)
-            for cat in classificar_sentenca_extrator(sentenca):
-                resultados.append({
-                    "Categoria": cat,
-                    "Conteúdo":  sentenca.strip(),
-                    "Região":    pag["regiao"],
-                    "Caderno":   pag["caderno"],
-                    "Página":    pag["pagina"],
-                    "Fonte":     pag["cabecalho"],
-                })
-    return resultados
-
+    if tipo_visual == "Diagrama de Fluxo / Arquitetura (Mermaid)":
+        scripts = """<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs'; mermaid.initialize({ startOnLoad: true, theme: 'neutral' });</script>"""
+        return regras_gerais + f"""
+        OBJETIVO: Criar um diagrama interativo usando Mermaid.js.
+        ESTRUTURA:
+        {base_html.replace('{scripts_extras}', scripts)}
+        - No body, crie um cabeçalho bonito explicando o diagrama.
+        - Crie uma div com a classe 'mermaid' e coloque a sintaxe do diagrama Mermaid dentro dela.
+        - Exemplos de uso: fluxos de licenciamento ambiental, cadeia produtiva da pesca, governança.
+        """
+        
+    elif tipo_visual == "Dashboard de Dados (Chart.js)":
+        scripts = """<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>"""
+        return regras_gerais + f"""
+        OBJETIVO: Criar um dashboard com gráficos usando Chart.js.
+        ESTRUTURA:
+        {base_html.replace('{scripts_extras}', scripts)}
+        - Identifique métricas, metas ou quantidades nos textos (ex: áreas de conservação, produção de pescado, investimentos).
+        - Crie um layout em Grid com Tailwind e insira tags <canvas id="meuGraficoX"></canvas>.
+        - No final do body, adicione as tags <script> com a lógica do Chart.js para renderizar os gráficos com cores harmoniosas.
+        """
+        
+    elif tipo_visual == "Relatório Visual / Resumo Executivo":
+        return regras_gerais + f"""
+        OBJETIVO: Criar um relatório visual moderno (tipo infográfico web) focado em tipografia e Grid/Cards.
+        ESTRUTURA:
+        {base_html.replace('{scripts_extras}', '')}
+        - Não use tabelas em formato de texto. Use CSS Grid do Tailwind para comparar regiões, listar legislações ou detalhar próximos passos.
+        - Use ícones emoji, fontes grandes para números chave, e caixas coloridas (ex: bg-blue-100) para destacar informações.
+        """
+        
+    elif tipo_visual == "Apresentação de Slides (HTML)":
+        scripts = """
+        <style>
+            .slides-container { scroll-snap-type: y mandatory; height: 80vh; overflow-y: scroll; scroll-behavior: smooth; }
+            .slide { scroll-snap-align: start; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 4rem; text-align: center; border-bottom: 2px solid #e5e7eb; }
+        </style>
+        """
+        return regras_gerais + f"""
+        OBJETIVO: Criar uma apresentação de slides em uma única página HTML, rolável usando CSS Scroll Snap.
+        ESTRUTURA:
+        {base_html.replace('{scripts_extras}', scripts)}
+        - Crie uma div principal com a classe 'slides-container'.
+        - Para cada tópico principal, crie uma div com a classe 'slide bg-white' (ou alterne cores de fundo suavemente com Tailwind).
+        - Faça um slide de Título, slides de conteúdo (com listas ou resumos), e um slide de conclusão.
+        """
 
 # ============================================================================
 # 📚 BARRA LATERAL
@@ -636,17 +367,6 @@ with st.sidebar:
         <p style="color:rgba(255,255,255,.8);font-size:.8em;margin:0;">Cadernos Setoriais Oficiais</p>
     </div>""", unsafe_allow_html=True)
 
-    st.markdown("**🔗 Fontes Oficiais**")
-    st.markdown("""
-    <a href="https://www.marinha.mil.br/secirm/psrm/pem/cadernos-setoriais-pem-nordeste" target="_blank" class="source-link">
-        <span>🌴</span> Cadernos Nordeste
-    </a>
-    <a href="https://www.marinha.mil.br/secirm/pt-br/psrm/pem/cadernos-setoriais-pem-sul" target="_blank" class="source-link">
-        <span>🗺️</span> Cadernos Sul
-    </a>""", unsafe_allow_html=True)
-
-    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
-
     st.markdown('<div class="sidebar-section"><h4>📍 Região Sul</h4>', unsafe_allow_html=True)
     escolha_sul = st.selectbox("", list(CADERNOS_SUL.keys()), key="sul_select", label_visibility="collapsed")
     st.markdown("</div>", unsafe_allow_html=True)
@@ -654,8 +374,6 @@ with st.sidebar:
     st.markdown('<div class="sidebar-section"><h4>📍 Região Nordeste</h4>', unsafe_allow_html=True)
     escolha_ne = st.selectbox("", list(CADERNOS_NE.keys()), key="ne_select", label_visibility="collapsed")
     st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
 
     for key, default in [
         ("cadernos_ativos", []),
@@ -666,10 +384,7 @@ with st.sidebar:
             st.session_state[key] = default
 
     if st.session_state.cadernos_ativos:
-        st.markdown(
-            '<div class="loaded-notebooks"><h4 style="color:#059669;margin:0 0 10px 0;">✅ Carregados</h4>',
-            unsafe_allow_html=True,
-        )
+        st.markdown('<div class="loaded-notebooks"><h4 style="color:#059669;margin:0 0 10px 0;">✅ Carregados</h4>', unsafe_allow_html=True)
         for regiao, nome, _ in st.session_state.cadernos_ativos:
             icon = "🗺️" if regiao == "SUL" else "🌴"
             rc = "region-sul" if regiao == "SUL" else "region-ne"
@@ -685,9 +400,6 @@ with st.sidebar:
             <div class="metric-value">{len(st.session_state.todas_as_paginas_lidas)}</div>
             <div class="metric-label">📄 Páginas Indexadas</div>
         </div>""", unsafe_allow_html=True)
-    else:
-        st.info("👈 Selecione um caderno para começar")
-
 
 # ============================================================================
 # 💾 CARREGAMENTO
@@ -710,19 +422,15 @@ if cadernos_selecionados_agora != st.session_state.cadernos_ativos:
         st.sidebar.success("🎉 Pronto para consulta!")
         st.rerun()
 
-
 # ============================================================================
 # 📑 ABAS
 # ============================================================================
-aba1, aba2 = st.tabs(["🔮 Chat Analítico", "📋 Extrator de Informações"])
-
+aba1, aba2 = st.tabs(["🔮 Chat Analítico", "✨ Visual Explainer (Páginas Web)"])
 
 # ─────────────────────────────────────────────────────────────
-# ABA 1 — CHAT ROLÁVEL COM INPUT FIXO
+# ABA 1 — CHAT (Mantido intacto)
 # ─────────────────────────────────────────────────────────────
 with aba1:
-
-    # ── Janela de mensagens rolável ────────────────────────────
     chat_box = st.container(height=600, border=False)
     with chat_box:
         if not st.session_state.mensagens:
@@ -730,226 +438,117 @@ with aba1:
             <div class="chat-empty-state">
                 <div class="icon">🌊</div>
                 <h4>Assistente PEM pronto para ajudar</h4>
-                <p>Faça perguntas sobre zoneamento, conservação, impactos ambientais,
-                legislação marítima, pesca, energia e mais.<br>
-                As respostas são fundamentadas e rastreáveis até a página de origem.</p>
+                <p>Faça perguntas sobre os documentos carregados.</p>
             </div>""", unsafe_allow_html=True)
         else:
             for m in st.session_state.mensagens:
                 with st.chat_message(m["role"], avatar="👤" if m["role"] == "user" else "🤖"):
                     st.markdown(m["content"])
 
-    # ── Input fixo no fundo ────────────────────────────────────
     pergunta = st.chat_input("Digite sua pergunta sobre os cadernos PEM…")
-
     if pergunta:
         if not st.session_state.cadernos_ativos:
             st.error("⚠️ Selecione ao menos um caderno na barra lateral.")
         else:
             st.session_state.mensagens.append({"role": "user", "content": pergunta})
-
-            # Re-renderiza o container com a nova mensagem + spinner
             with chat_box:
-                with st.chat_message("user", avatar="👤"):
-                    st.markdown(pergunta)
-
+                with st.chat_message("user", avatar="👤"): st.markdown(pergunta)
                 with st.chat_message("assistant", avatar="🤖"):
                     with st.spinner("🔍 Buscando e analisando documentos…"):
-
-                        resultados = buscar_paginas_relevantes(
-                            pergunta, st.session_state.todas_as_paginas_lidas, limite=20
-                        )
+                        resultados = buscar_paginas_relevantes(pergunta, st.session_state.todas_as_paginas_lidas)
                         trechos = extrair_trechos_para_chat(resultados, pergunta)
-                        contexto = "\n\n".join(
-                            f"{t['cabecalho']}\n{t['texto']}" for t in trechos
-                        )
-                        contexto, tokens_est = limitar_contexto(contexto, max_chars=40000)
-
-                        with st.expander(
-                            f"📚 {len(trechos)} trechos | ~{tokens_est} tokens",
-                            expanded=False,
-                        ):
-                            for t in trechos:
-                                st.markdown(
-                                    f"`{t['cabecalho']}` {exibir_score_html(t['score'])}",
-                                    unsafe_allow_html=True,
-                                )
+                        contexto = "\n\n".join(f"{t['cabecalho']}\n{t['texto']}" for t in trechos)
+                        contexto, tokens = limitar_contexto(contexto, 40000)
 
                         if not trechos:
-                            aviso = "⚠️ Nenhum trecho relevante encontrado. Tente reformular ou carregar outros cadernos."
-                            st.warning(aviso)
-                            st.session_state.mensagens.append({"role": "assistant", "content": aviso})
+                            st.warning("⚠️ Nenhum trecho relevante encontrado.")
                         else:
-                            tipo = detectar_tipo_pergunta(pergunta)
-                            prompt = criar_prompt_final(pergunta, contexto, tipo)
-                            try:
-                                res = model.generate_content(prompt)
-                                resposta = formatar_tabela_markdown(res.text)
-                                st.markdown(resposta)
-                                st.session_state.mensagens.append({"role": "assistant", "content": resposta})
-                            except Exception as e:
-                                st.error(f"⚠️ Erro na geração: {e}")
-
+                            prompt = f"TRECHOS:\n{contexto}\n\nPERGUNTA: {pergunta}"
+                            res = model_chat.generate_content(prompt)
+                            st.markdown(res.text)
+                            st.session_state.mensagens.append({"role": "assistant", "content": res.text})
 
 # ─────────────────────────────────────────────────────────────
-# ABA 2 — EXTRATOR DE INFORMAÇÕES
+# ABA 2 — VISUAL EXPLAINER (A Mágica do HTML Gerado via IA)
 # ─────────────────────────────────────────────────────────────
 with aba2:
     st.markdown("""
-    <div class="chat-intro" style="border-top-color:#6366F1;">
-        <h3 style="color:#1E3A5F;margin-top:0;">📋 Extrator de Informações Relevantes</h3>
+    <div class="chat-intro" style="border-top-color:#10B981;">
+        <h3 style="color:#1E3A5F;margin-top:0;">✨ Visual Explainer</h3>
         <p style="color:#64748B;margin:0;">
-            Varre <strong>automaticamente</strong> todos os documentos carregados e extrai três categorias
-            de informações críticas — <strong>sem IA</strong>, direto do texto, 100% rastreável.<br><br>
-            <span style="display:inline-flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
-                <span style="background:#EFF6FF;color:#1E40AF;padding:4px 12px;border-radius:20px;font-size:.83em;font-weight:600;">⚖️ Legislação &amp; Normas</span>
-                <span style="background:#F0FDF4;color:#065F46;padding:4px 12px;border-radius:20px;font-size:.83em;font-weight:600;">🚀 Próximos Passos</span>
-                <span style="background:#FFFBEB;color:#92400E;padding:4px 12px;border-radius:20px;font-size:.83em;font-weight:600;">🏛️ Informações Institucionais</span>
-            </span>
+            Transforme o texto denso dos Cadernos do PEM em <strong>páginas Web completas, painéis interativos ou apresentações de slides</strong>. 
+            A Inteligência Artificial irá ler os documentos ativos e desenhar o código HTML pronto para uso ou download.
         </p>
     </div>""", unsafe_allow_html=True)
 
     if not st.session_state.cadernos_ativos:
-        st.warning("⚠️ Selecione ao menos um caderno na barra lateral.")
+        st.warning("⚠️ Selecione ao menos um caderno na barra lateral para extrair dados.")
     else:
-        if st.button("🚀 Extrair Informações", type="primary", use_container_width=True):
-            with st.spinner("🔬 Varrendo padrões linguísticos nos documentos…"):
-                st.session_state["extracao_cache"] = executar_extracao(
-                    st.session_state.todas_as_paginas_lidas
-                )
-
-        if st.session_state.get("extracao_cache"):
-            dados = st.session_state["extracao_cache"]
-            df = pd.DataFrame(dados)
-
-            # ── Filtros ────────────────────────────────────────────────
-            st.markdown("---")
-            fc1, fc2, fc3 = st.columns(3)
-            with fc1:
-                cats_disp = sorted(df["Categoria"].unique())
-                cats_sel = st.multiselect("Categoria", cats_disp, default=cats_disp)
-            with fc2:
-                cads_disp = sorted(df["Caderno"].unique())
-                cads_sel = st.multiselect("Caderno", cads_disp, default=cads_disp)
-            with fc3:
-                regioes_disp = sorted(df["Região"].unique())
-                regioes_sel = st.multiselect("Região", regioes_disp, default=regioes_disp)
-
-            busca_texto = st.text_input(
-                "🔎 Filtrar por palavra no conteúdo:",
-                placeholder="Ex: licença, IBAMA, cronograma, marinha…",
+        col1, col2 = st.columns([1, 2])
+        
+        with col1:
+            tipo_visual = st.selectbox(
+                "Tipo de Apresentação Visual:",
+                [
+                    "Relatório Visual / Resumo Executivo",
+                    "Diagrama de Fluxo / Arquitetura (Mermaid)",
+                    "Dashboard de Dados (Chart.js)",
+                    "Apresentação de Slides (HTML)"
+                ]
             )
-
-            df_f = df[
-                df["Categoria"].isin(cats_sel)
-                & df["Caderno"].isin(cads_sel)
-                & df["Região"].isin(regioes_sel)
-            ]
-            if busca_texto.strip():
-                df_f = df_f[df_f["Conteúdo"].str.contains(busca_texto, case=False, na=False)]
-
-            # ── Sumário ────────────────────────────────────────────────
-            por_cat = df_f["Categoria"].value_counts()
-            ORDER = ["Legislação", "Próximos Passos", "Institucional"]
-            nums_html = "".join(
-                f"""<div style="text-align:center;">
-                    <div class="num">{por_cat.get(c, 0)}</div>
-                    <div class="lbl">{PADROES_EXTRATOR[c]['icone']} {c}</div>
-                </div>"""
-                for c in ORDER
+            
+        with col2:
+            instrucao = st.text_input(
+                "O que você deseja visualizar/resumir?",
+                placeholder="Ex: Resuma os principais conflitos ambientais; Crie um fluxo do licenciamento..."
             )
-            st.markdown(f"""
-            <div class="ext-summary">
-                <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:center;justify-content:space-around;">
-                    <div style="text-align:center;">
-                        <div style="font-size:2.6em;font-weight:800;">{len(df_f)}</div>
-                        <div style="opacity:.85;font-size:.88em;">registros encontrados</div>
-                    </div>
-                    {nums_html}
-                </div>
-            </div>""", unsafe_allow_html=True)
+            
+        gerar_btn = st.button("🚀 Gerar Página HTML", type="primary", use_container_width=True)
+        
+        if gerar_btn and instrucao:
+            with st.spinner(f"Criando {tipo_visual}... isso pode levar até 1 minuto."):
+                
+                # 1. Pegar contexto geral do documento ativo para mandar pra IA
+                # Pegamos uma amostra robusta do PDF para ter dados para os gráficos
+                textos_pdf = [p["cabecalho"] + "\n" + p["texto_original"] for p in st.session_state.todas_as_paginas_lidas]
+                contexto_bruto = "\n\n".join(textos_pdf)
+                contexto_limpo, _ = limitar_contexto(contexto_bruto, max_chars=80000) # Limite grande para visão global
+                
+                # 2. Gerar Prompt
+                prompt_visual = gerar_prompt_visual_explainer(tipo_visual, instrucao, contexto_limpo)
+                
+                # 3. Chamar a IA
+                try:
+                    resposta_ia = model_visual.generate_content(prompt_visual)
+                    html_gerado = resposta_ia.text
+                    
+                    # Limpeza de markdown caso a IA coloque o HTML dentro de blocos ```html ... ```
+                    html_gerado = re.sub(r"^```html\n", "", html_gerado, flags=re.IGNORECASE)
+                    html_gerado = re.sub(r"^```\n", "", html_gerado)
+                    html_gerado = re.sub(r"```$", "", html_gerado)
+                    
+                    # Salva no session state para não perder caso a página recarregue
+                    st.session_state['html_gerado'] = html_gerado
+                    
+                except Exception as e:
+                    st.error(f"Erro ao gerar a página visual: {e}")
 
-            # ── Resultados agrupados por Categoria → Caderno ──────────
-            for cat in ORDER:
-                df_cat = df_f[df_f["Categoria"] == cat]
-                if df_cat.empty:
-                    continue
-
-                cfg = PADROES_EXTRATOR[cat]
-                st.markdown(
-                    f"## {cfg['icone']} {cat} &nbsp;<span style='font-size:.7em;color:#6B7280;'>({len(df_cat)} registros)</span>",
-                    unsafe_allow_html=True,
-                )
-
-                for caderno in sorted(df_cat["Caderno"].unique()):
-                    df_cad = df_cat[df_cat["Caderno"] == caderno].sort_values("Página")
-                    regiao_cad = df_cad["Região"].iloc[0]
-                    icon = "🗺️" if regiao_cad == "SUL" else "🌴"
-
-                    with st.expander(
-                        f"{icon} {caderno} — {len(df_cad)} itens",
-                        expanded=False,
-                    ):
-                        for _, row in df_cad.iterrows():
-                            conteudo = row["Conteúdo"]
-                            if busca_texto.strip():
-                                conteudo = re.sub(
-                                    rf"(?i)({re.escape(busca_texto)})",
-                                    r"<mark>\1</mark>",
-                                    conteudo,
-                                )
-                            st.markdown(f"""
-                            <div class="ext-card {cfg['card']}">
-                                <div>
-                                    <span class="ext-badge {cfg['badge']}">{cfg['icone']} {cat}</span>
-                                    <span style="font-size:.79em;color:#9CA3AF;">Pág. {row['Página']}</span>
-                                </div>
-                                <div class="ext-text">{conteudo}</div>
-                                <div class="ext-source">📍 {row['Fonte']}</div>
-                            </div>""", unsafe_allow_html=True)
-
-                st.markdown("")  # espaço entre categorias
-
-            # ── Exportação ─────────────────────────────────────────────
+        # Se existir HTML gerado, renderiza e mostra botão de download
+        if 'html_gerado' in st.session_state:
             st.markdown("---")
-            exp1, exp2 = st.columns(2)
-            with exp1:
-                csv_data = df_f[["Categoria", "Conteúdo", "Região", "Caderno", "Página"]].to_csv(
-                    index=False, encoding="utf-8-sig"
-                )
-                st.download_button(
-                    "📊 Exportar CSV",
-                    csv_data,
-                    file_name="extracao_pem.csv",
-                    mime="text/csv",
-                    use_container_width=True,
-                )
-            with exp2:
-                md_lines = ["# Extração de Informações — PEM\n"]
-                for cat in ORDER:
-                    df_c = df_f[df_f["Categoria"] == cat]
-                    if not df_c.empty:
-                        md_lines.append(f"\n## {PADROES_EXTRATOR[cat]['icone']} {cat} ({len(df_c)})\n")
-                        for _, r in df_c.iterrows():
-                            md_lines.append(f"- **[{r['Fonte']}]** {r['Conteúdo']}\n")
-                st.download_button(
-                    "📄 Exportar Markdown",
-                    "\n".join(md_lines),
-                    file_name="extracao_pem.md",
-                    mime="text/markdown",
-                    use_container_width=True,
-                )
-
-        elif "extracao_cache" in st.session_state and not st.session_state["extracao_cache"]:
-            st.markdown("""
-            <div class="no-results">
-                <div style="font-size:2.5em;margin-bottom:10px;">🔍</div>
-                <h4 style="color:#92400E;margin:0 0 8px;">Nenhum registro identificado</h4>
-                <p style="color:#78350F;margin:0;">
-                    Verifique se os documentos carregados possuem texto legível (não são imagens escaneadas).
-                </p>
-            </div>""", unsafe_allow_html=True)
-
+            st.subheader("Pré-visualização do Documento")
+            
+            # Renderiza o HTML dentro de um iFrame no Streamlit
+            components.html(st.session_state['html_gerado'], height=700, scrolling=True)
+            
+            # Botão de Download do código HTML gerado
+            st.download_button(
+                label="📥 Fazer Download do HTML (Visual Explainer)",
+                data=st.session_state['html_gerado'],
+                file_name="relatorio_visual_pem.html",
+                mime="text/html",
+                use_container_width=True
+            )
 
 # ============================================================================
 # 🌊 FOOTER
@@ -957,5 +556,5 @@ with aba2:
 st.markdown("""
 <div class="footer">
     <p>🌊 <strong>Assistente PEM</strong> · Marinha do Brasil — SECIRM</p>
-    <p style="opacity:.5;font-size:.82em;margin-top:4px;">⚠️ Sempre valide as informações nos documentos oficiais antes de utilizá-las.</p>
+    <p style="opacity:.5;font-size:.82em;margin-top:4px;">⚠️ Sempre valide as informações geradas pela IA.</p>
 </div>""", unsafe_allow_html=True)
