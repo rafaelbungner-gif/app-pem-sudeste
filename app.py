@@ -192,8 +192,15 @@ REGRAS:
         system_instruction=instrucao_sistema_chat,
     )
     
-    # Modelo dedicado para o Visual Explainer (sem system prompt rígido para permitir formatação HTML livre)
-    model_visual = genai.GenerativeModel(model_name=modelo_nome)
+    # Modelo dedicado para o Visual Explainer (com restrição rigorosa contra alucinação e limite expandido)
+    model_visual = genai.GenerativeModel(
+        model_name=modelo_nome,
+        generation_config=genai.GenerationConfig(
+            temperature=0.1,  # Temperatura muito baixa para forçar aderência estrita aos dados fornecidos
+            top_p=0.8,
+            max_output_tokens=8192,  # Permite geração de códigos HTML extensos e detalhados
+        )
+    )
 
 except Exception as e:
     st.error(f"⚠️ Erro de conexão com o Google AI: {e}")
@@ -303,10 +310,12 @@ def gerar_prompt_visual_explainer(tipo_visual, instrucao_usuario, contexto_docum
     
     PEDIDO DO USUÁRIO: {instrucao_usuario}
     
-    REGRAS TÉCNICAS:
-    1. Retorne EXCLUSIVAMENTE o código HTML completo. NUNCA use marcadores markdown como ```html ou ```. Comece com <!DOCTYPE html>.
-    2. Use classes do Tailwind CSS (já incluso via CDN) para criar um design moderno, limpo e profissional.
-    3. Cite as fontes dos dados (Região, Caderno, Página) discretamente no rodapé dos elementos ou em tooltips.
+    REGRAS TÉCNICAS E DE VERACIDADE (OBRIGATÓRIAS):
+    1. ZERO ALUCINAÇÃO: Baseie-se ESTRITAMENTE nos dados de contexto fornecidos. É expressamente PROIBIDO inventar números, leis, estatísticas, fluxos ou informações que não constem no texto.
+    2. AUSÊNCIA DE DADOS: Se os dados necessários para o pedido do usuário não estiverem presentes, não os crie. Adicione uma nota elegante no layout informando que "Não constam dados sobre [assunto] no caderno analisado".
+    3. Retorne EXCLUSIVAMENTE o código HTML completo. NUNCA use marcadores markdown como ```html ou ```. Comece com <!DOCTYPE html>.
+    4. Use classes do Tailwind CSS (já incluso via CDN) para criar um design moderno, limpo e profissional.
+    5. Cite as fontes dos dados (Região, Caderno, Página) discretamente no rodapé dos elementos ou em tooltips.
     """
 
     if tipo_visual == "Diagrama de Fluxo / Arquitetura (Mermaid)":
@@ -528,7 +537,10 @@ with aba2:
                 # 1. Pegar contexto do documento filtrado para mandar pra IA
                 textos_pdf = [p["cabecalho"] + "\n" + p["texto_original"] for p in paginas_alvo]
                 contexto_bruto = "\n\n".join(textos_pdf)
-                contexto_limpo, _ = limitar_contexto(contexto_bruto, max_chars=80000) 
+                
+                # Aumentamos o max_chars para 1.500.000 (~350k tokens), permitindo a leitura de cadernos inteiros sem corte.
+                # A família Gemini 1.5 suporta contextos enormes, o que permite analisar todo o documento.
+                contexto_limpo, _ = limitar_contexto(contexto_bruto, max_chars=1500000) 
                 
                 # 2. Gerar Prompt
                 prompt_visual = gerar_prompt_visual_explainer(tipo_visual, instrucao, contexto_limpo)
