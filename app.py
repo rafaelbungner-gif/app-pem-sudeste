@@ -96,6 +96,18 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     border:1px solid rgba(255,255,255,.12); box-shadow:0 4px 15px rgba(12,74,110,.25);
 }
 .sidebar-section h4 { color:white; margin-bottom:8px; font-size:.92em; font-weight:600; }
+.source-link {
+    display:flex; align-items:center; gap:10px;
+    background:linear-gradient(135deg,#FFFFFF,#F8FAFC); border-radius:12px;
+    padding:12px 15px; margin:6px 0; text-decoration:none; color:#0C4A6E;
+    font-weight:600; font-size:.86em; border:1px solid #E2E8F0; transition:all .3s;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.source-link:hover {
+    background:linear-gradient(135deg,#0EA5E9,#0284C7); color:white; border-color:#0284C7;
+    transform:translateX(5px); box-shadow:0 4px 15px rgba(14,165,233,.35);
+}
+.sidebar-divider { border-top:2px dashed rgba(255,255,255,.2); margin:16px 0; }
 .loaded-notebooks {
     background:linear-gradient(135deg,#F0FDF4,#DCFCE7); border-radius:14px; padding:16px;
     margin:12px 0; border:1px solid #86EFAC; box-shadow:0 3px 12px rgba(16,185,129,.12);
@@ -375,6 +387,17 @@ with st.sidebar:
         <h3 style="color:white;margin:8px 0 4px;">Biblioteca PEM</h3>
         <p style="color:rgba(255,255,255,.8);font-size:.8em;margin:0;">Cadernos Setoriais Oficiais</p>
     </div>""", unsafe_allow_html=True)
+
+    st.markdown("**🔗 Fontes Oficiais**")
+    st.markdown("""
+    <a href="https://www.marinha.mil.br/secirm/psrm/pem/cadernos-setoriais-pem-nordeste" target="_blank" class="source-link">
+        <span>🌴</span> Cadernos Nordeste
+    </a>
+    <a href="https://www.marinha.mil.br/secirm/pt-br/psrm/pem/cadernos-setoriais-pem-sul" target="_blank" class="source-link">
+        <span>🗺️</span> Cadernos Sul
+    </a>""", unsafe_allow_html=True)
+
+    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
 
     st.markdown('<div class="sidebar-section"><h4>📍 Região Sul</h4>', unsafe_allow_html=True)
     escolha_sul = st.selectbox("", list(CADERNOS_SUL.keys()), key="sul_select", label_visibility="collapsed")
