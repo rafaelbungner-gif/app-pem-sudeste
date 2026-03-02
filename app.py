@@ -484,9 +484,18 @@ with aba2:
     if not st.session_state.cadernos_ativos:
         st.warning("⚠️ Selecione ao menos um caderno na barra lateral para extrair dados.")
     else:
-        col1, col2 = st.columns([1, 2])
+        # Criar a lista de opções baseada apenas nos cadernos que já foram carregados
+        opcoes_cadernos = ["Todos os Cadernos Ativos"] + [f"[{c[0]}] {c[1]}" for c in st.session_state.cadernos_ativos]
+        
+        col1, col2, col3 = st.columns([1, 1.2, 2])
         
         with col1:
+            caderno_alvo = st.selectbox(
+                "Analisar qual documento?",
+                opcoes_cadernos
+            )
+            
+        with col2:
             tipo_visual = st.selectbox(
                 "Tipo de Apresentação Visual:",
                 [
@@ -497,10 +506,10 @@ with aba2:
                 ]
             )
             
-        with col2:
+        with col3:
             instrucao = st.text_input(
                 "O que você deseja visualizar/resumir?",
-                placeholder="Ex: Resuma os principais conflitos ambientais; Crie um fluxo do licenciamento..."
+                placeholder="Ex: Resuma os principais conflitos ambientais..."
             )
             
         gerar_btn = st.button("🚀 Gerar Página HTML", type="primary", use_container_width=True)
@@ -508,11 +517,18 @@ with aba2:
         if gerar_btn and instrucao:
             with st.spinner(f"Criando {tipo_visual}... isso pode levar até 1 minuto."):
                 
-                # 1. Pegar contexto geral do documento ativo para mandar pra IA
-                # Pegamos uma amostra robusta do PDF para ter dados para os gráficos
-                textos_pdf = [p["cabecalho"] + "\n" + p["texto_original"] for p in st.session_state.todas_as_paginas_lidas]
+                # Filtrar as páginas com base no caderno alvo selecionado
+                paginas_alvo = st.session_state.todas_as_paginas_lidas
+                
+                if caderno_alvo != "Todos os Cadernos Ativos":
+                    # Extrai apenas o nome do caderno ignorando a tag da região (ex: de "[SUL] AQUICULTURA" extrai "AQUICULTURA")
+                    nome_selecionado = caderno_alvo.split("] ")[1]
+                    paginas_alvo = [p for p in paginas_alvo if p["caderno"] == nome_selecionado]
+                
+                # 1. Pegar contexto do documento filtrado para mandar pra IA
+                textos_pdf = [p["cabecalho"] + "\n" + p["texto_original"] for p in paginas_alvo]
                 contexto_bruto = "\n\n".join(textos_pdf)
-                contexto_limpo, _ = limitar_contexto(contexto_bruto, max_chars=80000) # Limite grande para visão global
+                contexto_limpo, _ = limitar_contexto(contexto_bruto, max_chars=80000) 
                 
                 # 2. Gerar Prompt
                 prompt_visual = gerar_prompt_visual_explainer(tipo_visual, instrucao, contexto_limpo)
